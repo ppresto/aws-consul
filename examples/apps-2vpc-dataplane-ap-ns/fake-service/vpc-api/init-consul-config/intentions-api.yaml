@@ -1,0 +1,15 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api
+  namespace: consul
+spec:
+  destination:
+    name: api
+    namespace: api
+  sources:
+  - name: web
+    namespace: web
+    partition: web
+    action: allow

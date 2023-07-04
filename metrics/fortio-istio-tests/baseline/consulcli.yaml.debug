@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: consulcli
+  namespace: fortio-baseline
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consulcli
+  namespace: fortio-baseline
+  labels:
+    app: consulcli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consulcli
+  template:
+    metadata:
+      namespace: fortio-baseline
+      labels:
+        app: consulcli
+      annotations:
+        consulcli.hashicorp.com/connect-inject: 'false'
+    spec:
+      serviceAccountName: consulcli
+      containers:
+        - name: consulcli
+          image: hashicorp/consul:1.15
+          # securityContext:
+          #   capabilities:
+          #     add: ["NET_ADMIN", "SYS_TIME"]

@@ -1,0 +1,65 @@
+global:
+  enabled: false
+  logLevel: "debug"
+  name: ${cluster_name}
+  datacenter: ${datacenter}
+  image: "hashicorppreview/consul-enterprise:1.14-dev"
+  imageK8S: docker.mirror.hashicorp.services/hashicorppreview/consul-k8s-control-plane:1.0.0-dev
+  imageConsulDataplane: "hashicorppreview/consul-dataplane:1.0.0"
+
+  enableConsulNamespaces: true
+  adminPartitions:
+    enabled: true
+    #name: "shared"
+  acls:
+    manageSystemACLs: true
+    bootstrapToken:
+      secretName: consul-bootstrap-acl-token
+      secretKey: token
+  tls:
+    enabled: true
+    caCert:
+      secretName: consul-ca-cert
+      secretKey: tls.crt
+
+externalServers:
+  enabled: true
+  hosts: ["${consul_external_servers}"]
+  tlsServerName: "server.${datacenter}.consul"
+  httpsPort: 8501
+  grpcPort: 8502
+  useSystemRoots: false
+  k8sAuthMethodHost: ${aks_cluster}
+
+server:
+  enabled: false
+
+connectInject:
+  transparentProxy:
+    defaultEnabled: true
+  enabled: true
+  default: true
+  consulNode:
+    meta: 
+      node: "${cluster_name}-agentless-node"
+
+controller:
+  enabled: true
+  
+meshGateway:
+  enabled: true
+  replicas: 3
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer

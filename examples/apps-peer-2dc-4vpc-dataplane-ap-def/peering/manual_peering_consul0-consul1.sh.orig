@@ -1,0 +1,74 @@
+#!/bin/bash
+SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+# PreReq - 
+#  Setup Kubeconfig to auth into AKS Consul cluster
+
+#kubectl config use-context consul0
+kubectl config use-context consul0
+
+# Create Peering Acceptor (consul0)
+kubectl apply -f ${SCRIPT_DIR}/peering-acceptor-consul0.yaml
+
+# Verify Peering Acceptor and Secret was created
+kubectl -n consul get secrets peering-token-consul1-westus2
+kubectl -n consul get peeringacceptors
+
+# Copy secrets from peering acceptor (consul0) to peering dialer (consul1)
+kubectl -n consul get secret peering-token-consul1-westus2 --context consul0 -o yaml | kubectl apply --context consul1 -f -
+
+# Create Peering Dialer (consul1)
+kubectl config use-context consul1
+kubectl apply -f ${SCRIPT_DIR}/peering-dialer-consul1.yaml
+
+# Verify peering on consul0
+kubectl config use-context consul0
+echo
+echo "Verifying Peering Connection on Acceptor (consul0) with curl command:"
+echo "kubectl -n consul exec -it consul-server-0 -- curl -k --header \"X-Consul-Token: ${CONSUL_HTTP_TOKEN}\" --request GET https://localhost:8501/v1/peering/consul1-westus2"
+sleep 5
+CONSUL_HTTP_TOKEN=$(kubectl -n consul get secrets consul-bootstrap-acl-token -o go-template --template="{{.data.token|base64decode}}")
+kubectl -n consul exec -it consul-server-0 -- curl -k \
+    --header "X-Consul-Token: ${CONSUL_HTTP_TOKEN}" \
+    --request GET \
+    https://localhost:8501/v1/peering/consul1-westus2 \
+    | jq -r
+
+# Export Services for each peer to advertise available service catalog.
+echo "Exporting Acceptor services..."
+kubectl config use-context consul0
+kubectl apply -f ${SCRIPT_DIR}/exportedServices_consul0-eastus.yaml
+echo "Exporting Dialer services..."
+kubectl config use-context consul1
+kubectl apply -f ${SCRIPT_DIR}/exportedServices_consul1-westus2.yaml
+
+# Deploy api and web services to consul1 to verify peering and export are working.
+echo
+echo "Deploying Dialer services (web, api) to verify peering and export are working"
+echo
+kubectl config use-context consul1
+kubectl apply -f ${SCRIPT_DIR}/../../examples/apps/fake-service/westus2/init-consul-config
+kubectl apply -f ${SCRIPT_DIR}/../../examples/apps/fake-service/westus2/westus2-1
+
+# Verify the api and web service from consul1 are available to consul0
+echo "Verify services from Dialer (consul1) are available to Acceptor (consul0)"
+kubectl config use-context consul0
+kubectl -n consul exec -it consul-server-0 -- curl -k 'https://127.0.0.1:8501/v1/health/connect/api?peer=consul1-westus2' | jq -r
+kubectl -n consul exec -it consul-server-0 -- curl -k 'https://127.0.0.1:8501/v1/health/connect/web?peer=consul1-westus2' | jq -r
+
+cleanup=false
+if [[ $cleanup ]]; then
+  cleanup
+fi
+# Clean up
+function cleanup () {
+    kubectl config use-context consul1
+    kubectl delete -f ${SCRIPT_DIR}/../../examples/apps/fake-service/westus2/init-consul-config
+    kubectl delete -f ${SCRIPT_DIR}/../../examples/apps/fake-service/westus2/westus2-1
+    kubectl delete -f ${SCRIPT_DIR}/exportedServices_consul1-westus2.yaml
+    kubectl delete -f ${SCRIPT_DIR}/peering-dialer-consul1.yaml
+    kubectl -n consul delete secret peering-token-consul1-westus2
+
+    kubectl config use-context consul0
+    kubectl delete -f ${SCRIPT_DIR}/exportedServices_consul1-westus2.yaml
+    kubectl delete -f ${SCRIPT_DIR}/peering-acceptor-consul0.yaml
+}

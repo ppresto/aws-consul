@@ -1,0 +1,17 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: api
+  namespace: default
+spec:
+  connectTimeout: 0s
+  failover:
+    '*':
+      targets:
+        #- namespace: westus2-2
+        #- namespace: westus2-3
+        - peer: presto-cluster-use1-app1
+          namespace: default
+          service: api
+

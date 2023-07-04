@@ -1,0 +1,11 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: PeeringDialer
+metadata:
+  name: eastus-shared ## The name of the peer you want to connect to
+  namespace: consul
+spec:
+  peer:
+    secret:
+      name: "peering-token-aks1-westus2"
+      key: "data"
+      backend: "kubernetes"

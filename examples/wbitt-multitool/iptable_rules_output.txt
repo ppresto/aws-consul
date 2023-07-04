@@ -1,0 +1,44 @@
+k exec -ti network-multitool-deployment-6497bd648f-4dcl5 -- iptables -t nat -L
+
+
+Defaulted container "network-multitool" out of: network-multitool, consul-dataplane, consul-connect-inject-init (init)
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination
+CONSUL_PROXY_INBOUND  tcp  --  anywhere             anywhere
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+CONSUL_DNS_REDIRECT  udp  --  anywhere             localhost            udp dpt:domain
+CONSUL_DNS_REDIRECT  tcp  --  anywhere             localhost            tcp dpt:domain
+CONSUL_PROXY_OUTPUT  tcp  --  anywhere             anywhere
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination
+
+Chain CONSUL_DNS_REDIRECT (2 references)
+target     prot opt source               destination
+DNAT       udp  --  anywhere             localhost            udp dpt:domain to:127.0.0.1:8600
+DNAT       tcp  --  anywhere             localhost            tcp dpt:domain to:127.0.0.1:8600
+
+Chain CONSUL_PROXY_INBOUND (1 references)
+target     prot opt source               destination
+RETURN     tcp  --  anywhere             anywhere             tcp dpt:20200
+CONSUL_PROXY_IN_REDIRECT  tcp  --  anywhere             anywhere
+
+Chain CONSUL_PROXY_IN_REDIRECT (1 references)
+target     prot opt source               destination
+REDIRECT   tcp  --  anywhere             anywhere             redir ports 20000
+
+Chain CONSUL_PROXY_OUTPUT (1 references)
+target     prot opt source               destination
+RETURN     all  --  anywhere             anywhere             owner UID match 5996
+RETURN     all  --  anywhere             anywhere             owner UID match 5995
+RETURN     all  --  anywhere             localhost
+CONSUL_PROXY_REDIRECT  all  --  anywhere             anywhere
+
+Chain CONSUL_PROXY_REDIRECT (1 references)
+target     prot opt source               destination
+REDIRECT   tcp  --  anywhere             anywhere             redir ports 15001

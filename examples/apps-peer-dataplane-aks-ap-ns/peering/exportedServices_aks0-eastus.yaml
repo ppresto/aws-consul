@@ -1,0 +1,10 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: eastus-shared ## The name of the partition containing the service
+spec:
+  services:
+    - name: "*" ## The name of the service you want to export
+      namespace: "eastus-1"
+      consumers:
+      - peer: westus2-shared ## The name of the peer that receives the service

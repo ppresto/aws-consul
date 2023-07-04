@@ -1,0 +1,108 @@
+global:
+  enabled: false
+  domain: consul
+  logLevel: "debug"
+  name: ${cluster_name}
+  datacenter: ${datacenter}
+  image: "hashicorp/consul-enterprise:${consul_version}"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
+  imageConsulDataplane: "hashicorp/consul-dataplane:1.1.0"
+  enterpriseLicense:
+    secretName: 'consul-ent-license'
+    secretKey: 'key'
+    enableLicenseAutoload: true
+  enableConsulNamespaces: true
+  adminPartitions:
+    enabled: true
+    name: ${partition}
+  peering:
+    enabled: true
+  acls:
+    manageSystemACLs: true
+    bootstrapToken:
+      secretName: consul-bootstrap-acl-token
+      secretKey: token
+  tls:
+    enabled: true
+    # # Client attributes only.  Not needed for dataplane
+    # enableAutoEncrypt: true
+    # gossipEncryption:
+    #   secretName: consul-gossip-key
+    #   secretKey: gossipEncryptionKey
+    # caCert:
+    #   secretName: consul-ca-cert
+    #   secretKey: tls.crt
+
+externalServers:
+  enabled: true
+  hosts: ["${consul_external_servers}"]
+  #tlsServerName: "server.${datacenter}.consul"
+  httpsPort: 443
+  grpcPort: 8502
+  useSystemRoots: true
+  k8sAuthMethodHost: ${eks_cluster}
+
+dns:
+  enabled: true
+  enableRedirection: true
+  
+# syncCatalog:
+#   enabled: true
+#   k8sPrefix: null
+#   k8sDenyNamespaces: ["kube-system", "kube-public"]
+#   consulNamespaces:
+#     mirroringK8S: true
+
+connectInject:
+  enabled: true
+  default: false
+  cni:
+    enabled: true
+  consulNamespaces:
+    consulDestinationNamespace: "default"   # Ignored when mirroringK8S is true
+    mirroringK8S: true
+  transparentProxy:
+    defaultEnabled: true
+  metrics:
+    defaultEnabled: true
+    defaultEnableMerging: false
+  sidecarProxy:
+    concurrency: 2
+    resources:
+      requests:
+        memory: "100Mi" 
+        cpu: "100m"
+      limits:
+        cpu: "100m"
+  initContainer:
+    resources:
+      requests:
+        memory: "25Mi"
+        cpu: "50m"
+      limits:
+        memory: "150Mi"
+        cpu: "250m"
+  consulNode:
+    meta: 
+      node: "${cluster_name}-agentless-node"
+
+meshGateway:
+  enabled: true
+  replicas: 1
+  service:
+    enabled: true
+    type: LoadBalancer
+    # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/annotations/#lb-type
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        annotations: |
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

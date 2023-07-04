@@ -1,0 +1,17 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: api
+  namespace: westus2-1
+spec:
+  connectTimeout: 0s
+  failover:
+    '*':
+      targets:
+        - namespace: westus2-2
+        - namespace: westus2-3
+        #- peer: eastus-shared
+        #  namespace: eastus-1
+        #  service: api
+

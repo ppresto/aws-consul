@@ -1,0 +1,48 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api1
+spec:
+  destination:
+    name: api
+    namespace: westus2-1
+  sources:
+  - name: web
+    namespace: westus2-2
+    action: allow
+  - name: web
+    namespace: westus2-1
+    action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api2
+spec:
+  destination:
+    name: api
+    namespace: westus2-2
+  sources:
+  - name: web
+    namespace: westus2-1
+    action: allow
+  - name: web
+    namespace: westus2-2
+    action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api3
+spec:
+  destination:
+    name: api
+    namespace: westus2-3
+  sources:
+  - name: web
+    namespace: westus2-1
+    action: allow
+  - name: web
+    namespace: westus2-2
+    action: allow

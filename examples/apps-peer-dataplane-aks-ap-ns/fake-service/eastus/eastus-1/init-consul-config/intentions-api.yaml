@@ -1,0 +1,18 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api
+spec:
+  destination:
+    name: "*"
+    namespace: eastus-1
+  sources:
+  - name: "*"
+    peer: westus2-shared
+    namespace: "*"
+    action: allow
+  #- name: web
+  #  namespace: westus2-1
+  #  partition: westus2-shared
+  #  action: allow

@@ -1,0 +1,12 @@
+###  ERROR MESSAGE  ###
+# Error from server: error when creating "/Users/patrickpresto/Projects/poc/espn-disney/terraform-azure-consul-ent-k8s/examples/dataplane-partitions/fake-service/eastus/eastus-1/init-consul-config/mesh.yaml": admission webhook "mutate-mesh.consul.hashicorp.com" denied the request: mesh.consul.hashicorp.com "mesh" is invalid: spec.peering.peerThroughMeshGateways: Forbidden: "peerThroughMeshGateways" is only valid in the "default" partition
+
+# Only valid in default Partion. Pre-configure this.
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: Mesh
+metadata:
+  name: mesh
+  namespace: consul
+spec:
+  peering:
+    peerThroughMeshGateways: true

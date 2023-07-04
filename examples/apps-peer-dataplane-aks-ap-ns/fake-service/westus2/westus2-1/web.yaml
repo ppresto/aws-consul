@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web
+  namespace: westus2-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: westus2-1
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: westus2-1
+  labels:
+    app: web
+    service: fake-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      namespace: westus2-1
+      labels:
+        app: web
+        service: fake-service
+      annotations:
+        consul.hashicorp.com/connect-inject: 'true'
+        consul.hashicorp.com/transparent-proxy: 'false'
+        consul.hashicorp.com/connect-service-upstreams: 'api:9091'
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              zone: westus2-1
+              service: fake-service
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - westus2-1
+      serviceAccountName: web
+      containers:
+        - name: web
+          image: nicholasjackson/fake-service:v0.21.0
+          ports:
+            - containerPort: 9090
+          env:
+            - name: 'LISTEN_ADDR'
+              value: '0.0.0.0:9090'
+            - name: 'UPSTREAM_URIS'
+              value: 'http://localhost:9091'
+            - name: 'NAME'
+              value: 'web'
+            - name: 'MESSAGE'
+              value: 'Hello World'
+            - name: 'SERVER_TYPE'
+              value: 'http'
+            - name: 'TIMING_50_PERCENTILE'
+              value: '30ms'
+            - name: 'TIMING_90_PERCENTILE'
+              value: '60ms'
+            - name: 'TIMING_99_PERCENTILE'
+              value: '90ms'
+            - name: 'TIMING_VARIANCE'
+              value: '10'
+            - name: 'HTTP_CLIENT_APPEND_REQUEST'
+              value: 'true'
+            - name: 'TRACING_ZIPKIN'
+              value: 'http://simplest-collector:9411'

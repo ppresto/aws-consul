@@ -1,0 +1,10 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: app2 ## The name of the partition containing the service
+spec:
+  services:
+    - name: mesh-gateway
+      namespace: default
+      consumers:
+        - peer: dc1-app1

@@ -1,0 +1,25 @@
+module "consul_${cluster_name}" {
+  source   = "../../../modules/helm_install_consul"
+  providers = { aws = aws.${region_shortname} }
+  release_name  = "${release_name}"
+  chart_name         = "${consul_chart_name}"
+  cluster_name         = "${cluster_name}"
+  datacenter           = "${datacenter}"
+  consul_partition     = "${partition}"
+  consul_type          = "${consul_type}"
+  server_replicas      = "${server_replicas}"
+  consul_version       = "${consul_version}"
+  consul_license       = file("../../../files/consul.lic")
+  consul_helm_chart_template = "${consul_helm_chart_template}"
+  #consul_helm_chart_template  = "values-dataplane-hcp.yaml"
+  #consul_helm_chart_template = "values-server.yaml"
+  #consul_helm_chart_template = "values-dataplane.yaml"
+  consul_helm_chart_version  = "${consul_helm_chart_version}"
+  consul_external_servers    = "${consul_external_servers}" #HCP private endpoint address
+  eks_cluster_endpoint       = "${eks_cluster_endpoint}"
+  hcp_consul_ca_file             = "${consul_ca_file}"
+  hcp_consul_config_file             = "${consul_config_file}"
+  hcp_consul_root_token_secret_id = "${consul_root_token_secret_id}"
+  node_selector = "${node_selector}"
+}
+

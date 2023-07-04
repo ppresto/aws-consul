@@ -1,0 +1,9 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: app1 ## The name of the partition containing the service
+spec:
+  services:
+    - name: "api" ## The name of the service you want to export
+      consumers:
+      - peer: presto-cluster-usw2-app1 ## The name of the peer that receives the service

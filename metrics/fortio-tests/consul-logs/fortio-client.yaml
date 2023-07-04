@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fortio-client
+  namespace: fortio-consul-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortio-client
+  namespace: fortio-consul-logs
+spec:
+  selector:
+    app: fortio-client
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: fortio-consul-logs
+  labels:
+    app: fortio-client
+  name: fortio-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortio-client
+  template:
+    metadata:
+      namespace: fortio-consul-logs
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'true'
+        'consul.hashicorp.com/transparent-proxy': 'true'
+      labels:
+        app: fortio-client
+    spec:
+      containers:
+      - name: fortio
+        image: fortio/fortio:latest_release
+        env:
+        ports:
+        - containerPort: 8080
+          name: http-fortio
+        - containerPort: 8079
+          name: grpc-ping
+        # args:
+          # - report # report only (readonly) mode
+          # - -sync
+          # # http...443 is not a typo, this is to work with egress
+          # - http://storage.googleapis.com:443/fortio-data?prefix=daily.releases/
+          # - -sync-interval
+          # - 5m # sync every 5 minutes
+          # - -loglevel
+          # - verbose
+        volumeMounts:
+        - name: reports
+          mountPath: /var/lib/fortio
+      volumes:
+      - name: reports
+        emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+      serviceAccountName: fortio-client
+      nodeSelector:
+        nodegroup: services

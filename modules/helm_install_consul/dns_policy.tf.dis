@@ -1,0 +1,23 @@
+# Create Default DNS Lookup policy and attach to anonymous token.
+resource "consul_acl_policy" "dns-request" {
+  name  = "dns-request-policy"
+  rules = <<-RULE
+    namespace_prefix "" {
+      node_prefix "" {
+        policy = "read"
+      }
+      service_prefix "" {
+        policy = "read"
+      }
+      # prepared query rules are not allowed in namespaced policies
+      #query_prefix "" {
+      #  policy = "read"
+      #}
+    }
+    RULE
+}
+
+resource "consul_acl_token_policy_attachment" "attachment" {
+  token_id = "00000000-0000-0000-0000-000000000002"
+  policy   = consul_acl_policy.dns-request.name
+}

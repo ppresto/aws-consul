@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fortio-client
+  namespace: fortio-baseline
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortio-client
+  namespace: fortio-baseline
+  labels:
+    app: fortio-client
+spec:
+  selector:
+    app: fortio-client
+  ports:
+  - name: http-fortio
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: fortio-baseline
+  labels:
+    app: fortio-client
+  name: fortio-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortio-client
+  template:
+    metadata:
+      namespace: fortio-baseline
+      annotations:
+      labels:
+        app: fortio-client
+    spec:
+      containers:
+      - name: fortio
+        image: fortio/fortio:latest_release
+        ports:
+        - containerPort: 8080
+          name: http-fortio
+        - containerPort: 8079
+          name: grpc-ping
+        volumeMounts:
+        - name: reports
+          mountPath: /var/lib/fortio
+      volumes:
+      - name: reports
+        emptyDir:
+            medium: Memory
+      serviceAccountName: fortio-client
+      nodeSelector:
+        nodegroup: services

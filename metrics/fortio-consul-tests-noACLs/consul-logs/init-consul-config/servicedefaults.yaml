@@ -1,0 +1,24 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: fortio-client
+  namespace: fortio-consul-logs
+spec:
+  protocol: http
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name:   fortio-server-defaults
+  namespace: fortio-consul-logs
+spec:
+  protocol: http
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name:   fortio-server-defaults-grpc
+  namespace: fortio-consul-logs
+spec:
+  protocol: grpc

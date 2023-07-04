@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name:   fortio-server-defaults
+  namespace: fortio-baseline
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:   fortio-server-defaults
+  namespace: fortio-baseline
+spec:
+  selector:
+    app:   fortio-server-defaults
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: grpc
+    port: 8079
+    targetPort: 8079
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: fortio-baseline
+  labels:
+    app:   fortio-server-defaults
+  name:   fortio-server-defaults
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:   fortio-server-defaults
+  template:
+    metadata:
+      namespace: fortio-baseline
+      annotations:
+      labels:
+        app:   fortio-server-defaults
+    spec:
+      containers:
+      - name:   fortio-server-defaults
+        image: fortio/fortio:latest_release
+        env:       
+        ports:
+        - containerPort: 8080
+          name: http-fortio
+        - containerPort: 8079
+          name: grpc-ping        
+      serviceAccountName:   fortio-server-defaults
+      nodeSelector:
+        nodegroup: services

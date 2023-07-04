@@ -1,0 +1,144 @@
+global:
+  name: consul
+  image: "hashicorp/consul-enterprise:1.15.2-ent"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:1.1.1
+  #imageConsulDataplane: "hashicorp/consul-dataplane:1.0.0"
+  enableConsulNamespaces: true
+  enterpriseLicense:
+    secretName: 'consul-ent-license'
+    secretKey: 'key'
+    enableLicenseAutoload: true
+  datacenter: dc1
+  peering:
+    enabled: true
+  adminPartitions:
+    enabled: true
+    name: default
+
+  # TLS configures whether Consul components use TLS.
+  tls:
+    enabled: true
+    httpsOnly: false  # Metrics are exposed on 8500 only (http).  Anonymous policy requires Agent "read" if ACL enabled.
+  acls:
+    manageSystemACLs: true
+    nodeSelector: |
+      nodegroup: consul
+  metrics:
+    enabled: true
+    enableGatewayMetrics: true
+    enableAgentMetrics: true
+    agentMetricsRetentionTime: "59m"
+server:
+  replicas: 3
+  bootstrapExpect: 3
+  exposeService:
+    # When enabled, deploys a Kubernetes Service to reach the Consul servers.
+    # @type: boolean
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+  nodeSelector: |
+    nodegroup: consul
+ 
+  extraConfig: |
+    {
+      "log_level": "TRACE"
+    }
+  resources:
+    requests:
+      memory: "1461Mi" # 75% of 2GB Mem
+      cpu: "1000m"
+    limits:
+      memory: "1461Mi"
+      cpu: "1000m"
+dns:
+  enabled: true
+  enableRedirection: true
+webhookCertManager:
+  nodeSelector: |
+    nodegroup: consul
+connectInject:
+  enabled: true
+  default: false
+  transparentProxy:
+    defaultEnabled: false
+  consulNamespaces:
+    mirroringK8S: true
+  nodeSelector: |
+    nodegroup: consul
+  metrics:
+    defaultEnabled: true # by default, this inherits from the value global.metrics.enabled
+    defaultEnableMerging: true
+    # defaultPrometheusScrapePort: 20200
+    # defaultPrometheusScrapePath: "/metrics"
+    # defaultMergedMetricsPort: 20100
+  sidecarProxy:
+    # https://blog.envoyproxy.io/envoy-threading-model-a8d44b922310
+    concurrency: 2
+
+    # These settings can be overridden on a per-pod basis via these annotations:
+    # - `consul.hashicorp.com/sidecar-proxy-cpu-limit`
+    # - `consul.hashicorp.com/sidecar-proxy-cpu-request`
+    # - `consul.hashicorp.com/sidecar-proxy-memory-limit`
+    # - `consul.hashicorp.com/sidecar-proxy-memory-request`
+    # @type: map
+    resources:
+      requests:
+        # Recommended production default: 100Mi
+        memory: "100Mi" 
+        # Recommended production default: 100m
+        cpu: "100m"
+      limits:
+        # Recommended production default: 100Mi
+        memory: "100Mi"
+        # Recommended production default: 100m
+        cpu: "100m"
+  initContainer:
+  # The defaults are optimized for developer instances of Kubernetes, however they should 
+  # be tweaked with the recommended defaults as shown below to speed up service registration times. 
+    resources:
+      requests:
+        # Recommended production default: 150Mi
+        memory: "25Mi"
+        # Recommended production default: 250m
+        cpu: "50m"
+      limits:
+        # Recommended production default: 150Mi
+        memory: "150Mi"
+        # Recommended production default: 500m
+        cpu: "250m"
+meshGateway:
+  enabled: true
+  replicas: 1
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+  nodeSelector: |
+    nodegroup: consul
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+    nodeSelector: |
+      nodegroup: consul
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        annotations: |
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+
+ui:
+  enabled: true
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  metrics:
+    enabled: true # by default, this inherits from the value global.metrics.enabled
+    provider: "prometheus"
+    baseURL: http://prometheus-server.default.svc.cluster.local

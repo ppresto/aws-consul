@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: network-multitool
+  namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-multitool
+  namespace: default
+spec:
+  selector:
+    app: network-multitool
+  ports:
+    - port: 9091
+      targetPort: 9091
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-multitool
+  namespace: default
+  labels:
+    app: network-multitool
+    version: v1
+    service: fake-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: network-multitool
+  template:
+    metadata:
+      namespace: default
+      labels:
+        app: network-multitool
+        service: fake-service
+      annotations:
+        consul.hashicorp.com/connect-inject: 'true'
+        consul.hashicorp.com/transparent-proxy: 'true'
+    spec:
+      serviceAccountName: network-multitool
+      containers:
+        - name: network-multitool
+          image: wbitt/network-multitool:latest
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN", "SYS_TIME"]

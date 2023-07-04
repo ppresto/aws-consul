@@ -1,0 +1,16 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: fortio-client
+  namespace: fortio-consul-tcp
+spec:
+  protocol: tcp
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name:   fortio-server-defaults
+  namespace: fortio-consul-tcp
+spec:
+  protocol: tcp

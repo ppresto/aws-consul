@@ -1,0 +1,21 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: westus2-1
+  labels:
+    name: westus2-1
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: westus2-2
+  labels:
+    name: westus2-2
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: westus2-3
+  labels:
+    name: westus2-3

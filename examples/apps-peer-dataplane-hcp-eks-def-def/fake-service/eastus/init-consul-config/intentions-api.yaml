@@ -1,0 +1,18 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: web-failover-to-api
+spec:
+  destination:
+    name: "api"
+    namespace: default
+  sources:
+  - name: "web"
+    peer: presto-cluster-usw2-default
+    namespace: default
+    action: allow
+  #- name: web
+  #  namespace: westus2-1
+  #  partition: westus2-shared
+  #  action: allow

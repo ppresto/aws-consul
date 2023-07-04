@@ -1,0 +1,62 @@
+adminPassword: password
+
+rbac:
+  create: false
+  pspEnabled: false
+
+# Disable test pods
+testFramework:
+  enabled: false
+
+podLabels:
+  app: grafana
+
+podAnnotations:
+  "consul.hashicorp.com/connect-inject": "false"
+
+service:
+  enabled: true
+  type: LoadBalancer
+  annotations:
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  port: 3000
+  targetPort: 3000
+
+# Configure the prometheus data source. We expect prometheus:9090 in the same namespace.
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        orgId: 1
+        url: http://prometheus-server.metrics.svc.cluster.local
+        access: proxy
+        isDefault: true
+        jsonData:
+          timeInterval: 5s
+        editable: true
+dashboardProviders:
+ dashboardproviders.yaml:
+   apiVersion: 1
+   providers:
+   - name: 'default'
+     orgId: 1
+     folder: ''
+     type: file
+     disableDeletion: false
+     editable: true
+     options:
+       path: /var/lib/grafana/dashboards/default
+dashboards:
+  default:
+    local-dashboard-k8sglobal:
+      url: https://raw.githubusercontent.com/ppresto/aws-consul/main/metrics/grafana/k8s-views-global.json
+    local-dashboard-k8snamespaces:
+      url: https://raw.githubusercontent.com/ppresto/aws-consul/main/metrics/grafana/k8s-views-namespaces.json
+    local-dashboard-k8spods:
+      url: https://raw.githubusercontent.com/ppresto/aws-consul/main/metrics/grafana/k8s-views-pods.json
+    local-dashboard-k8snodes:
+      url: https://raw.githubusercontent.com/ppresto/aws-consul/main/metrics/grafana/k8s-views-nodes.json
+    local-dashboard-k8sconsul:
+      url: https://raw.githubusercontent.com/ppresto/aws-consul/main/metrics/grafana/k8s-views-consul-mesh.json

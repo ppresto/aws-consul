@@ -1,0 +1,88 @@
+global:
+  enabled: false
+  logLevel: "debug"
+  name: presto-usw2-app1
+  datacenter: dc1
+  image: "hashicorp/consul-enterprise:1.15.2-ent"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:1.1.1
+  #imageConsulDataplane: "hashicorp/consul-dataplane:1.0.0"
+  enterpriseLicense:
+    secretName: 'consul-ent-license'
+    secretKey: 'key'
+    enableLicenseAutoload: true
+
+  enableConsulNamespaces: true
+  adminPartitions:
+    enabled: true
+    name: app1
+  peering:
+    enabled: true
+  acls:
+    manageSystemACLs: true
+    bootstrapToken:
+      secretName: consul-bootstrap-acl-token
+      secretKey: token
+  tls:
+    enabled: true
+    # # Client attributes only.  Not needed for dataplane
+    # enableAutoEncrypt: true
+    # gossipEncryption:
+    #   secretName: consul-gossip-key
+    #   secretKey: gossipEncryptionKey
+    caCert:
+      secretName: consul-ca-cert
+      secretKey: tls.crt
+
+externalServers:
+  enabled: true
+  hosts: ["k8s-consul-consulex-5d5d2b37a3-85e07578950ede07.elb.us-west-2.amazonaws.com"]
+  tlsServerName: "server.dc1.consul"
+  httpsPort: 8501
+  grpcPort: 8502
+  useSystemRoots: false
+  k8sAuthMethodHost: https://E450B3783146C21AC5EA3A4BCF550C8C.gr7.us-west-2.eks.amazonaws.com
+
+dns:
+  enabled: true
+  enableRedirection: true
+
+server:
+  enabled: false
+
+connectInject:
+  consulNamespaces:
+    consulDestinationNamespace: "default"   # Ignored when mirroringK8S is true
+    mirroringK8S: true
+  transparentProxy:
+    defaultEnabled: true
+  enabled: true
+  default: false
+  consulNode:
+    meta: 
+      node: "presto-usw2-app1-agentless-node"
+  cni:
+    enabled: true
+
+#controller:
+#  enabled: true
+
+meshGateway:
+  enabled: true
+  replicas: 1
+  service:
+    enabled: true
+    type: LoadBalancer
+    # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/annotations/#lb-type
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        annotations: |
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

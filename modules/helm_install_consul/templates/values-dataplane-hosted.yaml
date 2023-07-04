@@ -1,0 +1,88 @@
+global:
+  enabled: false
+  logLevel: "debug"
+  name: ${cluster_name}
+  datacenter: ${datacenter}
+  image: "hashicorp/consul-enterprise:${consul_version}"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
+  #imageConsulDataplane: "hashicorp/consul-dataplane:1.0.0"
+  enterpriseLicense:
+    secretName: 'consul-ent-license'
+    secretKey: 'key'
+    enableLicenseAutoload: true
+
+  enableConsulNamespaces: true
+  adminPartitions:
+    enabled: true
+    name: ${partition}
+  peering:
+    enabled: true
+  acls:
+    manageSystemACLs: true
+    bootstrapToken:
+      secretName: consul-bootstrap-acl-token
+      secretKey: token
+  tls:
+    enabled: true
+    # # Client attributes only.  Not needed for dataplane
+    # enableAutoEncrypt: true
+    # gossipEncryption:
+    #   secretName: consul-gossip-key
+    #   secretKey: gossipEncryptionKey
+    caCert:
+      secretName: consul-ca-cert
+      secretKey: tls.crt
+
+externalServers:
+  enabled: true
+  hosts: ["${consul_external_servers}"]
+  tlsServerName: "server.${datacenter}.consul"
+  httpsPort: 8501
+  grpcPort: 8502
+  useSystemRoots: false
+  k8sAuthMethodHost: ${eks_cluster}
+
+dns:
+  enabled: true
+  enableRedirection: true
+
+server:
+  enabled: false
+
+connectInject:
+  consulNamespaces:
+    consulDestinationNamespace: "default"   # Ignored when mirroringK8S is true
+    mirroringK8S: true
+  transparentProxy:
+    defaultEnabled: true
+  enabled: true
+  default: false
+  consulNode:
+    meta: 
+      node: "${cluster_name}-agentless-node"
+  cni:
+    enabled: true
+
+#controller:
+#  enabled: true
+
+meshGateway:
+  enabled: true
+  replicas: 1
+  service:
+    enabled: true
+    type: LoadBalancer
+    # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/annotations/#lb-type
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        annotations: |
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

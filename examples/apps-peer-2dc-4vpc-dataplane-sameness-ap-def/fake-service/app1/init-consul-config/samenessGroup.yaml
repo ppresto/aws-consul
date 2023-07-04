@@ -1,0 +1,9 @@
+apiVersion: consul.hashicorp.com/v1alpha1         # required
+kind: SamenessGroup                               # required
+metadata:
+  name: apps-sameness-group
+spec:
+  defaultForFailover: true
+  members:
+    - partition: app1
+    - peer: dc2-app2

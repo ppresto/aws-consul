@@ -1,0 +1,35 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: fortio-client
+  namespace: fortio-consul-default
+spec:
+  destination:
+    name: fortio-client
+  sources:
+    - name: ingress-gateway
+      action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name:   fortio-server-defaults
+  namespace: fortio-consul-default
+spec:
+  destination:
+    name:   fortio-server-defaults
+  sources:
+    - name: fortio-client
+      action: allow
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name:   fortio-server-defaults-grpc
+  namespace: fortio-consul-default
+spec:
+  destination:
+    name:   fortio-server-defaults-grpc
+  sources:
+    - name: fortio-client
+      action: allow

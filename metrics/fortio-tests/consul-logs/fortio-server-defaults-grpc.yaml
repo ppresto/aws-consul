@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name:   fortio-server-defaults-grpc
+  namespace: fortio-consul-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:   fortio-server-defaults-grpc
+  namespace: fortio-consul-logs
+spec:
+  selector:
+    app:   fortio-server-defaults-grpc
+  ports:
+  - port: 8079
+    targetPort: 8079
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: fortio-consul-logs
+  labels:
+    app:   fortio-server-defaults-grpc
+  name:   fortio-server-defaults-grpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:   fortio-server-defaults-grpc
+  template:
+    metadata:
+      namespace: fortio-consul-logs
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'true'
+        'consul.hashicorp.com/transparent-proxy': 'true'
+      labels:
+        app:   fortio-server-defaults-grpc
+    spec:
+      containers:
+      - name:   fortio-server-defaults-grpc
+        image: fortio/fortio:latest_release
+        env:       
+        ports:
+        - containerPort: 8079
+          name: grpc-ping        
+      serviceAccountName:   fortio-server-defaults-grpc
+      nodeSelector:
+        nodegroup: services
