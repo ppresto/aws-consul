@@ -1,0 +1,15 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: api
+  namespace: default
+spec:
+  connectTimeout: 15s
+  failover:
+    '*':
+      targets:
+        - peer: dc1-default
+          namespace: default
+          service: api
+

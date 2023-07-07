@@ -63,6 +63,6 @@ variable "all_routable_cidrs" {
 variable "hcp_cidr" {
   description = "Allow HCP CIDR access to cluster"
   type        = list(string)
-  #default     = ["0.0.0.0/0"]
-  default     = []
+  default     = ["0.0.0.0/0"]
+  #default     = []
 }

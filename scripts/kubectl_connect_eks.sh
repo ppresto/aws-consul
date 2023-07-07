@@ -13,8 +13,10 @@ PROJECTS=($(echo $output | jq -r '. | to_entries[] | select(.key|endswith("_proj
 # Authenticate to EKS
 for i in ${!PROJECTS[@]}
 do
-    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-    REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
+    #REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
     for cluster in ${EKS_CLUSTER_NAMES}
     do
         if [[ ! ${cluster} == "null" ]]; then
@@ -26,7 +28,7 @@ do
                     # get identity
                     aws sts get-caller-identity
                     # add EKS cluster to $HOME/.kube/config
-                    aws eks --region $region update-kubeconfig --name $cluster --alias "${PROJECTS[$i]}"
+                    aws eks --region $region update-kubeconfig --name $cluster --alias "${cluster##*-}" 
                 fi
             done
         fi
@@ -39,8 +41,10 @@ echo "EKS Environments"
 echo
 for i in ${!PROJECTS[@]}
 do
-    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-    REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
+    #REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
     for cluster in ${EKS_CLUSTER_NAMES}
     do
         if [[ ! ${cluster} == "null" ]]; then
@@ -50,10 +54,12 @@ do
                     echo "${PROJECTS[$i]}"
                     echo "  Region: ${region}"
                     echo "  EKS_CLUSTER_NAMES: ${cluster}"
-                    alias $(echo ${PROJECTS[$i]})="kubectl config use-context ${PROJECTS[$i]}"
+                    #alias $(echo ${PROJECTS[$i]})="kubectl config use-context ${PROJECTS[$i]}"
                     alias $(echo ${region:3:4})="kubectl config use-context ${PROJECTS[$i]}"
-                    echo "  alias: ${PROJECTS[$i]} = kubectl config use-context ${PROJECTS[$i]}"
+                    alias $(echo ${cluster##*-})="kubectl config use-context ${cluster##*-}"
+                    #echo "  alias: ${PROJECTS[$i]} = kubectl config use-context ${PROJECTS[$i]}"
                     echo "  alias: ${region:3:4} = kubectl config use-context ${PROJECTS[$i]}"
+                    echo "  alias: ${cluster##*-} =  kubectl config use-context ${cluster##*-}"
                     echo
                 fi
             done

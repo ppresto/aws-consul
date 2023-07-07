@@ -22,7 +22,7 @@
     - [Consul - Admin Partitions.](#consul---admin-partitions)
   - [EKS / Kubernetes](#eks--kubernetes)
     - [EKS - Login / Set Context](#eks---login--set-context)
-    - [EKS - Helm](#eks---helm)
+    - [EKS - Install Consul with Helm](#eks---install-consul-with-helm)
     - [EKS - Uninstall Helm chart](#eks---uninstall-helm-chart)
     - [EKS - Helm install AWS LB Controller](#eks---helm-install-aws-lb-controller)
     - [EKS - Test pod connectivity to Consul](#eks---test-pod-connectivity-to-consul)
@@ -31,6 +31,7 @@
     - [EKS - Terminate stuck namespace](#eks---terminate-stuck-namespace)
     - [EKS - Terminate stuck objects](#eks---terminate-stuck-objects)
   - [Envoy](#envoy)
+    - [Attach debug container to pod to run additional commands (tcpdump, netstat, dig, curl, etc...)](#attach-debug-container-to-pod-to-run-additional-commands-tcpdump-netstat-dig-curl-etc)
     - [Envoy - Change logging level](#envoy---change-logging-level)
     - [Envoy - Read fake-service envoy-sidcar configuration](#envoy---read-fake-service-envoy-sidcar-configuration)
   - [Metrics](#metrics)
@@ -299,7 +300,7 @@ Label node
 ```
 kubectl label nodes ip-10-16-1-177.us-west-2.compute.internal nodetype=consul
 ```
-### EKS - Helm
+### EKS - Install Consul with Helm
 Manually install consul using Helm.  The test.yaml below can be created from existing Terraform Output.  Make sure you are using a [compatable consul-k8s helm chart version](https://www.consul.io/docs/k8s/compatibility).  For Ent Consul make sure you create the k8s license secret in the correct namespace that the helm chart is expecting (ex: consul).
 
 ```
@@ -466,6 +467,12 @@ kubectl patch proxydefaults.consul.hashicorp.com global -n default --type merge 
 
 ## Envoy
 [Verify Envoy compatability](https://www.consul.io/docs/connect/proxies/envoy) for your platform and consul version.
+
+### Attach debug container to pod to run additional commands (tcpdump, netstat, dig, curl, etc...)
+```
+kubectl -n fortio-baseline debug -it $POD_NAME --image=nicolaka/netshoot
+#kubectl -n fortio-baseline debug -q -i $POD_NAME --image=nicolaka/netshoot
+```
 
 ### Envoy - Change logging level
 

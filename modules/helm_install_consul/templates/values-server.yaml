@@ -1,7 +1,7 @@
 global:
   name: consul
   image: "hashicorp/consul-enterprise:${consul_version}"
-  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
+  #imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
   #imageConsulDataplane: "hashicorp/consul-dataplane:1.0.0"
   enableConsulNamespaces: true
   enterpriseLicense:

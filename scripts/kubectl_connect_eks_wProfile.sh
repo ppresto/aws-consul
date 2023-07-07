@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# This script requires an aws profile be used for AutnN.
+# Im using 'assumed-role' profile when authenticating with Doormat.
+# This script will add the EKS cluster to this profile.  If using K8s IDE like Lens this profile is needed
+# to authN to K8s because the IDE doesn't have access to the local shell variables.
+#
+# Example Doormat Login Command
+#
+# doormat login \
+# && eval $(doormat aws export -a aws_ppresto_test) \
+# && aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile assumed-role \
+# && aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile assumed-role \
+# && aws configure set aws_session_token $AWS_SESSION_TOKEN --profile assumed-role \
+# && aws configure set region us-west-2 --profile assumed-role
+
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 PROFILE="assumed-role"
 
@@ -14,8 +28,10 @@ PROJECTS=($(echo $output | jq -r '. | to_entries[] | select(.key|endswith("_proj
 # Authenticate to EKS
 for i in ${!PROJECTS[@]}
 do
-    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-    REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
+    #REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
     for cluster in ${EKS_CLUSTER_NAMES}
     do
         if [[ ! ${cluster} == "null" ]]; then
@@ -41,8 +57,10 @@ echo "EKS Environments"
 echo
 for i in ${!PROJECTS[@]}
 do
-    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-    REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
+    #REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
+    REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
     for cluster in ${EKS_CLUSTER_NAMES}
     do
         if [[ ! ${cluster} == "null" ]]; then
@@ -52,10 +70,12 @@ do
                     echo "${PROJECTS[$i]}"
                     echo "  Region: ${region}"
                     echo "  EKS_CLUSTER_NAMES: ${cluster}"
-                    alias $(echo ${PROJECTS[$i]})="kubectl config use-context ${PROJECTS[$i]}"
+                    #alias $(echo ${PROJECTS[$i]})="kubectl config use-context ${PROJECTS[$i]}"
                     alias $(echo ${region:3:4})="kubectl config use-context ${PROJECTS[$i]}"
-                    echo "  alias: ${PROJECTS[$i]} = kubectl config use-context ${PROJECTS[$i]}"
+                    alias $(echo ${cluster##*-})="kubectl config use-context ${cluster##*-}"
+                    #echo "  alias: ${PROJECTS[$i]} = kubectl config use-context ${PROJECTS[$i]}"
                     echo "  alias: ${region:3:4} = kubectl config use-context ${PROJECTS[$i]}"
+                    echo "  alias: ${cluster##*-} =  kubectl config use-context ${cluster##*-}"
                     echo
                 fi
             done

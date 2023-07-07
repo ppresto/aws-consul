@@ -29,9 +29,9 @@ usage() {
     echo "Usage: $0 [-t <TEST_TYPES>] [-c <#threads>] [-d <DURATION>] [-k <K8S_CONTEXT>] [-w <wait_time>] [-f <report_path>]" 1>&2; 
     echo
     echo "Examples: "
-    echo "           $0 -t \"tcp\" -c16  -d300 -w1 -f ./reports"
-    echo "           $0 -t \"http\" -c16  -d300 -w1 -f ./reports"
-    echo "           $0 -t \"http grpc\" -c16  -d300 -w1 -f ./reports"
+    echo "           $0 -t \"tcp\" -c16  -d300 -w1 -f ./tmp"
+    echo "           $0 -t \"http\" -c16  -d300 -w1 -f ./tmp"
+    echo "           $0 -t \"http grpc\" -c16  -d300 -w1 -f ./tmp"
     exit 1; 
 }
 

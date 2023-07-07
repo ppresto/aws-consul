@@ -67,15 +67,15 @@ Quick CLI reference.
 ### HTTP Examples
 ```
 fortio_cli.sh -t http -n fortio-consul-optimized -d10 -c16
-fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d10 -p1024 -c16 -f ./reports
-fortio_cli.sh -j -t http -n fortio-consul-optimized -q1000 -d120 -h "MY_CUSTOM_REQ_HEADER:XXXXXXXXXXXXXX" -f ./reports -c "4 8 16"
-fortio_cli.sh -j -t http -n fortio-consul-default -d30 -p1024 -f ./reports
+fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d10 -p1024 -c16 -f ./tmp
+fortio_cli.sh -j -t http -n fortio-consul-optimized -q1000 -d120 -h "MY_CUSTOM_REQ_HEADER:XXXXXXXXXXXXXX" -f ./tmp -c "4 8 16"
+fortio_cli.sh -j -t http -n fortio-consul-default -d30 -p1024 -f ./tmp
 ```
 
 ### GRPC  Examples
 ```
 fortio_cli.sh -t grpc -n fortio-consul-optimized -k usw2-app1 -d300 -c "2 4 8"
-fortio_cli.sh -j -t grpc -n fortio-consul-optimized -d300 -c2 -p512 -h "MY_CUSTOM_REQ_HEADER:XXXXXXXXXXXXXX" -f ./reports
+fortio_cli.sh -j -t grpc -n fortio-consul-optimized -d300 -c2 -p512 -h "MY_CUSTOM_REQ_HEADER:XXXXXXXXXXXXXX" -f ./tmp
 ```
 
 ### TCP Examples
@@ -87,26 +87,26 @@ kubectl get ns -o json | jq -r '.items[].metadata.name' | grep fortio | grep tcp
 Run CLI
 ```
 fortio_cli.sh -t tcp -n fortio-istio-tcp -d3 -q1 -c1 -p1024
-fortio_cli.sh -t tcp -n fortio-consul-tcp -d60 -q1000 -c16 -p1024 -jf ./reports
+fortio_cli.sh -t tcp -n fortio-consul-tcp -d60 -q1000 -c16 -p1024 -jf ./tmp
 ```
 ### Run a single HTTP/GRPC performance test and write results to a file
 
 `fortio-consul-optimized` has configured the dataplane with more cpu and memory then `fortio-consul-default` to support more conncurrent connections.  Use either test case to run a quick HTTP performance test.
 ```
-metrics/reports/fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d 10 -w 0 -c2 -f /tmp
+metrics/scripts/fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d 10 -w 0 -c2 -f /tmp
 
-../../metrics/reports/fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d300 -p1024 -c16 -f ./reports
+../../metrics/scripts/fortio_cli.sh -j -t http -n fortio-consul-optimized -k usw2-app1 -d300 -p1024 -c16 -f ./tmp
 ```
 
 single GRPC test
 ```
-metrics/reports/fortio_cli.sh -j -t grpc -n fortio-consul-optimized -d 10 -w0 -c2 -f /tmp
+metrics/scripts/fortio_cli.sh -j -t grpc -n fortio-consul-optimized -d 10 -w0 -c2 -f /tmp
 ```
 
 ### Run a single test and use fortio UI to view results
 By removing the -j option the report will not be written to stdout and live within the fortio-client container.
 ```
-metrics/reports/fortio_cli.sh -t http -n fortio-consul-optimized -d 10 -w 0 -c2
+metrics/scripts/fortio_cli.sh -t http -n fortio-consul-optimized -d 10 -w 0 -c2
 ```
 Once the test completes open the fortio UI in your browser.  
 ```
@@ -123,7 +123,7 @@ The `fortio-consul-logs` test case sets proxy-defaults to enable the envoy acces
 
 Tab 1: Run successful test with correct header
 ```
-metrics/reports/fortio_cli.sh -j -t http -n fortio-consul-l7 -d 10 -w 0 -c2 -h "MY_CUSTOM_REQ_HEADER:Value" -f /tmp
+metrics/scripts/fortio_cli.sh -j -t http -n fortio-consul-l7 -d 10 -w 0 -c2 -h "MY_CUSTOM_REQ_HEADER:Value" -f /tmp
 ```
 
 Tab 2: Tail envoy access log
@@ -135,21 +135,21 @@ Look for the `MY_CUSTOM_REQ_HEADER`, and verify you see a successful response `"
 
 Next, go back to Tab 1 and run a failed test using a bad header.
 ```
-metrics/reports/fortio_cli.sh -j -t http -n fortio-consul-l7 -d 10 -w 0 -c2 -h "MY_BAD_HEADER:Value" -f /tmp
+metrics/scripts/fortio_cli.sh -j -t http -n fortio-consul-l7 -d 10 -w 0 -c2 -h "MY_BAD_HEADER:Value" -f /tmp
 ```
 While running this test, watch the envoy access logs for a permission denied response `"response_code":403`.  The requests to look for are coming from `"user_agent":"fortio.org/fortio-1.54.2"`
 
 ## Run All Fortio Tests
 The following wrapper scripts use fortio_cli.sh to run a suite of tests.
-* `metrics/reports/seq_fortio_cli_runs.sh`
+* `metrics/scripts/seq_fortio_cli_runs.sh`
 
 ### Sequencial - seq_fortio_cli_runs.sh
 Runs a test case on every fortio namespace
 
 This script will use your current k8s context to discover all fortio test case namespaces.  Each run uses a higher # of concurrent connections or threads (2, 4, 8, 16, 32, 64) unless connection count/s are provided.  The default test duration is 300 seconds per test.
 ```
-seq_fortio_cli_runs.sh -t "tcp" -c16  -d300 -w5 -p1024 -f ./reports
-seq_fortio_cli_runs.sh -t "http" -k usw2-app1 -c16  -d300 -w5 -f ./reports
+seq_fortio_cli_runs.sh -t "tcp" -c16  -d300 -w5 -p1024 -f ./tmp
+seq_fortio_cli_runs.sh -t "http" -k usw2-app1 -c16  -d300 -w5 -f ./tmp
 ```
 
 ### Notes
@@ -160,7 +160,7 @@ https://istio.io/v1.14/docs/ops/deployment/performance-and-scalability/
 #### Fortio Reports
 Run Fortio reports command pointing to the output from fortio_cli.sh so graphically see the reports.
 ```
-fortio report -data-dir ./reports/
+fortio report -data-dir ./tmp/
 ```
 port-forward 8080:8080 and access reports at localhost:8080/fortio by clicking on `reports`
 

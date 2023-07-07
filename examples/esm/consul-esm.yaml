@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-esm
+  labels:
+    app: consul-esm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9003
+      targetPort: 9003
+  selector:
+    app: consul-esm
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: consul-esm
+automountServiceAccountToken: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul-esm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: consul-esm
+      app: consul-esm
+  template:
+    metadata:
+      labels:
+        service: consul-esm
+        app: consul-esm
+    spec:
+      serviceAccountName: consul-esm
+      containers:
+        - name: consul-esm
+          image: hashicorp/consul-esm:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9003
+          command: [ "consul-esm", "-config-file=/configs/esmconfig.hcl" ]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /configs/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: consul-esm-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consul-esm-config
+  namespace: default
+data:
+  esmconfig.hcl: |
+    log_level="INFO"
+    node_probe_interval="10s"
+    http_addr=http://consulhelm.kafka.aws-dev.capgroup.com:80
+    datacenter="dc1"
+    ping_type="socket"
+    passing_threshold=0
+    critical_threshold=0
+    token="709716379a22d7dd3"

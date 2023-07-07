@@ -18,5 +18,6 @@ export PATH=${SCRIPT_DIR}/istio-1.18.0/bin:$PATH
 
 # Install
 istioctl x precheck
-istioctl install --set profile=demo -y
+#istioctl install --set profile=demo -y
+istioctl install --set profile=minimal -y
 kubectl label namespace default istio-injection=enabled

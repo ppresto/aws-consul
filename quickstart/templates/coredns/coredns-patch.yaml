@@ -22,9 +22,3 @@ data:
         forward . ${CONSUL_DNS_CLUSTER_IP}
         reload
     }
-metadata:
-    name: coredns
-    namespace: kube-system
-    labels:
-        eks.amazonaws.com/component: coredns
-        k8s-app: kube-dns

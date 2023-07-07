@@ -38,8 +38,8 @@ metrics-install:
 	@../../metrics/fortio-tests/deploy.sh
 
 run-fortio-tests:
-	@../../metrics/reports/seq_http_tests.sh -k ${K8S_CONTEXT} -f ./reports
-	@../../metrics/reports/seq_grpc_tests.sh -k ${K8S_CONTEXT} -f ./reports
+	@../../metrics/scripts/seq_http_tests.sh -k ${K8S_CONTEXT} -f ./tmp
+	@../../metrics/scripts/seq_grpc_tests.sh -k ${K8S_CONTEXT} -f ./tmp
 	
 metrics-clean:
 	@-../../metrics/deploy_helm.sh -d

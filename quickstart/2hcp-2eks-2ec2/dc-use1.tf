@@ -193,6 +193,27 @@ locals {
 
   ec2_service_list_use1 = distinct([for values in local.ec2_map_use1 : "${values.service}"])
 
+# Create EC2 Resource map per Proj/Env
+  ec2_location_use1 = flatten([for env, values in local.use1 : {
+    "${env}" = values.ec2
+    } if contains(keys(values), "ec2")
+  ])
+  ec2_location_map_use1 = { for item in local.ec2_location_use1 : keys(item)[0] => values(item)[0] }
+  # Flatten map by EC2 instance and inject Proj/Env.  For_each loop can now build every instance
+  ec2_use1 = flatten([for env, values in local.ec2_location_map_use1 :
+    flatten([for ec2, attr in values : {
+      "${env}-${ec2}" = {
+        "ec2_ssh_key"                 = attr.ec2_ssh_key
+        "target_subnets"              = attr.target_subnets
+        "vpc_env"                     = env
+        "hostname"                    = ec2
+        "associate_public_ip_address" = attr.associate_public_ip_address
+        "service"                     = try(attr.service, "default")
+        "create_consul_policy"        = try(attr.create_consul_policy, false)
+      }
+    }])
+  ])
+  ec2_map_use1 = { for item in local.ec2_use1 : keys(item)[0] => values(item)[0] }
 }
 
 # Create HVN and HCP Consul Cluster

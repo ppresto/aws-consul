@@ -50,9 +50,9 @@ metrics-install-istio:
 	@../../metrics/fortio-istio-tests/deploy.sh
 
 run-fortio-tests:
-	@../../metrics/reports/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "tcp" -c "16"  -d300 -w5 -p 1024 -f ./reports
-	@../../metrics/reports/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "http" -c "16"  -d300 -w5 -p 1024 -f ./reports
-	@../../metrics/reports/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "grpc" -c "16"  -d300 -w5 -p 1024 -f ./reports
+	@../../metrics/scripts/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "tcp" -c "16"  -d300 -w5 -p 1024 -f ./tmp
+	@../../metrics/scripts/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "http" -c "16"  -d300 -w5 -p 1024 -f ./tmp
+	@../../metrics/scripts/seq_fortio_cli_runs.sh -k ${K8S_CONTEXT} -t "grpc" -c "16"  -d300 -w5 -p 1024 -f ./tmp
 
 metrics-clean:
 	@-../../metrics/deploy_helm.sh -d
@@ -60,7 +60,7 @@ metrics-clean:
 	@-../../metrics/fortio-consul-tests/deploy.sh -d
 	@-../../metrics/fortio-istio-tests/deploy.sh -d
 	@-../../metrics/fortio-tests-noACLs/deploy.sh -d
-	@-istioctl x uninstall --purge
+	@-istioctl x uninstall --purge -y
 
 consul-clean: eks-connect metrics-clean
 	@-terraform -chdir="consul_helm_values" destroy -auto-approve 

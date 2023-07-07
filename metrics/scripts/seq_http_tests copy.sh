@@ -48,7 +48,7 @@ run () {
 usage() { 
     echo "Usage: $0 [-c <#threads>] [-d <DURATION>] [-k <K8S_CONTEXT>] [-f <report_path>]" 1>&2; 
     echo
-    echo "Example: $0 -d 300 -c 16 -f ./reports"
+    echo "Example: $0 -d 300 -c 16 -f ./tmp"
     exit 1; 
 }
 
