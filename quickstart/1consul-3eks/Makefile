@@ -34,7 +34,8 @@ consul-server: eks-connect awslb
 	@terraform -chdir="consul_helm_values" apply -target=module.consul_presto-usw2-consul1 -auto-approve
 
 consul-dataplane:
-	@../../scripts/update-SelfHosted-dataplane-yaml.sh .
+	@../../scripts/update-SelfHosted-dataplane-yaml.sh -f ./consul_helm_values/auto-presto-usw2-app1.tf -k consul1
+	@../../scripts/update-SelfHosted-dataplane-yaml.sh -f ./consul_helm_values/auto-presto-usw2-app2.tf -k consul2
 	@terraform -chdir="consul_helm_values" apply -target=module.consul_presto-usw2-app1 -target=module.consul_presto-usw2-app2 -auto-approve
 
 consul-info:

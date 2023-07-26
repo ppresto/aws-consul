@@ -501,11 +501,10 @@ module "sg-consul-agents-usw2" {
 #   private_cidr_blocks   = local.all_routable_cidr_blocks_usw2
 # }
 
-data "template_file" "eks_clients_usw2" {
+resource "local_file" "test" {
   for_each = { for k, v in local.usw2 : k => v if contains(keys(v), "eks") }
-
-  template = file("${path.module}/../templates/consul_helm_client.tmpl")
-  vars = {
+  content  = templatefile("${path.module}/../templates/consul_helm_client.tmpl",
+    {
     region_shortname            = "usw2"
     cluster_name                = try(local.usw2[each.key].eks.cluster_name, local.name)
     server_replicas             = try(local.usw2[each.key].eks.eks_desired_size, var.eks_desired_size)
@@ -520,14 +519,10 @@ data "template_file" "eks_clients_usw2" {
     consul_ca_file              = module.hcp_consul_usw2[local.hvn_list_usw2[0]].consul_ca_file
     consul_config_file          = module.hcp_consul_usw2[local.hvn_list_usw2[0]].consul_config_file
     consul_root_token_secret_id = module.hcp_consul_usw2[local.hvn_list_usw2[0]].consul_root_token_secret_id
-    partition                   = try(local.usw2[each.key].eks.consul_partition, var.consul_partition)
-    node_selector               = "nodegroup: default"
-  }
-}
-
-resource "local_file" "usw2" {
-  for_each = { for k, v in local.usw2 : k => v if contains(keys(v), "eks") }
-  content  = data.template_file.eks_clients_usw2[each.key].rendered
+    consul_type                 = "dataplane"
+    partition                   = var.consul_partition
+    node_selector               = "" #K8s node label to target deployment too.
+    })
   filename = "${path.module}/consul_helm_values/auto-${local.usw2[each.key].eks.cluster_name}.tf"
 }
 

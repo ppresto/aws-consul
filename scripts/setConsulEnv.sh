@@ -8,8 +8,8 @@ if [[ $1 ]]; then  #Pass path for tfstate dir if not in quickstart.
     AllPublicEndpoints=($(echo $output | jq -r '. | to_entries[] | select(.key|endswith("_consul_public_endpoint_url")) | .value.value'))
 fi
 if [[ -z ${AllPublicEndpoints} ]]; then
-    echo "No HCP Endpoints found in terraform.state"
-    echo "Searching for self hosted Consul..."
+    echo
+    echo "No HCP Endpoints found.  Searching for self hosted Consul..."
     echo "Current K8s Context: $(kubectl config current-context)"
     echo
 	export CONSUL_HTTP_ADDR="https://$(kubectl -n consul get svc consul-ui -o json | jq -r '.status.loadBalancer.ingress[].hostname')"

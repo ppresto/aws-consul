@@ -221,11 +221,10 @@ module "eks-usw2" {
   hcp_cidr                        = []
 }
 
-data "template_file" "eks_clients_usw2" {
+resource "local_file" "usw2" {
   for_each = { for k, v in local.usw2 : k => v if contains(keys(v), "eks") }
-
-  template = file("${path.module}/../templates/consul_helm_client.tmpl")
-  vars = {
+  content  = templatefile("${path.module}/../templates/consul_helm_client.tmpl",
+    {
     region_shortname            = "usw2"
     cluster_name                = try(local.usw2[each.key].eks.cluster_name, local.name)
     server_replicas             = try(local.usw2["usw2-app1"].eks.eks_desired_size, var.eks_desired_size)
@@ -241,14 +240,10 @@ data "template_file" "eks_clients_usw2" {
     consul_ca_file              = ""
     consul_config_file          = ""
     consul_root_token_secret_id = ""
+    consul_type                 = "dataplane"
     partition                   = try(local.usw2[each.key].eks.consul_partition, var.consul_partition)
     node_selector               = "nodegroup: consul" #K8s node label to target deployment too.
-  }
-}
-
-resource "local_file" "usw2" {
-  for_each = { for k, v in local.usw2 : k => v if contains(keys(v), "eks") }
-  content  = data.template_file.eks_clients_usw2[each.key].rendered
+    })
   filename = "${path.module}/consul_helm_values/auto-${local.usw2[each.key].eks.cluster_name}.tf"
 }
 

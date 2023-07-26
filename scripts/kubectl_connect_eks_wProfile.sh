@@ -44,7 +44,7 @@ do
                     aws sts get-caller-identity
                     # add EKS cluster to $HOME/.kube/config
                     echo "aws eks --region $region update-kubeconfig --name $cluster --alias "${cluster##*-}" --profile ${PROFILE}"
-                    aws eks --region $region update-kubeconfig --name $cluster --alias "${cluster##*-}" 
+                    aws eks --region $region update-kubeconfig --name $cluster --alias "${cluster##*-}" --profile "${PROFILE}" 
                 fi
             done
         fi

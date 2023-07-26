@@ -192,30 +192,7 @@ locals {
   ec2_map_use1 = { for item in local.ec2_use1 : keys(item)[0] => values(item)[0] }
 
   ec2_service_list_use1 = distinct([for values in local.ec2_map_use1 : "${values.service}"])
-
-# Create EC2 Resource map per Proj/Env
-  ec2_location_use1 = flatten([for env, values in local.use1 : {
-    "${env}" = values.ec2
-    } if contains(keys(values), "ec2")
-  ])
-  ec2_location_map_use1 = { for item in local.ec2_location_use1 : keys(item)[0] => values(item)[0] }
-  # Flatten map by EC2 instance and inject Proj/Env.  For_each loop can now build every instance
-  ec2_use1 = flatten([for env, values in local.ec2_location_map_use1 :
-    flatten([for ec2, attr in values : {
-      "${env}-${ec2}" = {
-        "ec2_ssh_key"                 = attr.ec2_ssh_key
-        "target_subnets"              = attr.target_subnets
-        "vpc_env"                     = env
-        "hostname"                    = ec2
-        "associate_public_ip_address" = attr.associate_public_ip_address
-        "service"                     = try(attr.service, "default")
-        "create_consul_policy"        = try(attr.create_consul_policy, false)
-      }
-    }])
-  ])
-  ec2_map_use1 = { for item in local.ec2_use1 : keys(item)[0] => values(item)[0] }
 }
-
 # Create HVN and HCP Consul Cluster
 module "hcp_consul_use1" {
   providers = {
@@ -486,11 +463,10 @@ module "sg-consul-dataplane-use1" {
   private_cidr_blocks   = local.all_routable_cidr_blocks_use1
 }
 
-data "template_file" "eks_clients_use1" {
+resource "local_file" "use1" {
   for_each = { for k, v in local.use1 : k => v if contains(keys(v), "eks") }
-
-  template = file("${path.module}/../templates/consul_helm_client.tmpl")
-  vars = {
+  content  = templatefile("${path.module}/../templates/consul_helm_client.tmpl",
+    {
     region_shortname            = "use1"
     cluster_name                = try(local.use1[each.key].eks.cluster_name, local.name)
     server_replicas             = try(local.use1[each.key].eks.eks_desired_size, var.eks_desired_size)
@@ -505,14 +481,10 @@ data "template_file" "eks_clients_use1" {
     consul_ca_file              = module.hcp_consul_use1[local.hvn_list_use1[0]].consul_ca_file
     consul_config_file          = module.hcp_consul_use1[local.hvn_list_use1[0]].consul_config_file
     consul_root_token_secret_id = module.hcp_consul_use1[local.hvn_list_use1[0]].consul_root_token_secret_id
+    consul_type                 = "dataplane"
     partition                   = var.consul_partition
     node_selector               = "" #K8s node label to target deployment too.
-  }
-}
-
-resource "local_file" "use1" {
-  for_each = { for k, v in local.use1 : k => v if contains(keys(v), "eks") }
-  content  = data.template_file.eks_clients_use1[each.key].rendered
+    })
   filename = "${path.module}/consul_helm_values/auto-${local.use1[each.key].eks.cluster_name}.tf"
 }
 

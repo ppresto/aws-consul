@@ -30,18 +30,6 @@ consul-install:
 	@terraform -chdir="consul_helm_values" init
 	@terraform -chdir="consul_helm_values" apply -auto-approve
 
-metrics-install:
-	@../../metrics/deploy_helm.sh -c ${CONSUL_UI}
-	@../../metrics/fortio-tests/deploy.sh
-
-run-fortio-tests:
-	@../../metrics/scripts/seq_http_tests.sh -k ${K8S_CONTEXT} -f ./tmp
-	@../../metrics/scripts/seq_grpc_tests.sh -k ${K8S_CONTEXT} -f ./tmp
-	
-metrics-clean:
-	@-../../metrics/deploy_helm.sh -d
-	@-../../metrics/fortio-tests/deploy.sh delete
-
 consul-clean: eks-connect metrics-clean
 	@-terraform -chdir="consul_helm_values" destroy -auto-approve
 
