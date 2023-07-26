@@ -1,18 +1,18 @@
 global:
   name: consul
-  image: "hashicorp/consul-enterprise:${consul_version}"
-  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
+  image: "hashicorp/consul-enterprise:1.15.4-ent"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:1.1.3
   enableConsulNamespaces: true
   enterpriseLicense:
     secretName: 'consul-ent-license'
     secretKey: 'key'
     enableLicenseAutoload: true
-  datacenter: ${datacenter}
+  datacenter: dc1
   peering:
     enabled: true
   adminPartitions:
     enabled: true
-    name: ${partition}
+    name: default
 
   # TLS configures whether Consul components use TLS.
   tls:
@@ -33,8 +33,8 @@ client:
 #   exposeGossipPorts: true # exposes client gossip ports as hostPorts
 
 server:
-  replicas: ${server_replicas}
-  bootstrapExpect: ${server_replicas}
+  replicas: 3
+  bootstrapExpect: 3
   # exposeGossipAndRPCPorts: true # exposes the server gossip and RPC ports as hostPorts
   # ports:
   #   # Configures the server gossip port
@@ -85,10 +85,6 @@ meshGateway:
     type: LoadBalancer
     annotations: |
       service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
-  %{~ if node_selector != "" ~}
-  nodeSelector: |
-    ${node_selector}
-  %{~ endif ~}
 
 ui:
   enabled: true

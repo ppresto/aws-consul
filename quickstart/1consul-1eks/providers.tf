@@ -33,11 +33,17 @@ terraform {
 provider "aws" {
   alias  = "usw2"
   region = "us-west-2"
+  ignore_tags {
+    key_prefixes = ["kubernetes.io/"]
+  }
 }
 
 provider "aws" {
   alias  = "use1"
   region = "us-east-1"
+  ignore_tags {
+    key_prefixes = ["kubernetes.io/"]
+  }
 }
 provider "consul" {
   alias      = "use1"

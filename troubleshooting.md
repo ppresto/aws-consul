@@ -5,9 +5,13 @@
   - [SSH - Bastion Host](#ssh---bastion-host)
     - [Manually create SSH Key, and AWS keypair](#manually-create-ssh-key-and-aws-keypair)
   - [AWS EC2 / VM](#aws-ec2--vm)
+    - [AWS EC2 - Helpful Commands](#aws-ec2---helpful-commands)
     - [AWS EC2 - Review Cloud-init execution](#aws-ec2---review-cloud-init-execution)
     - [AWS EC2 - systemctl consul.service](#aws-ec2---systemctl-consulservice)
     - [AWS EC2 - logs](#aws-ec2---logs)
+    - [AWS EC2 - Register local service with API](#aws-ec2---register-local-service-with-api)
+    - [ESM - Install](#esm---install)
+    - [ESM - Register external service](#esm---register-external-service)
     - [AWS EC2 - Test client connectivity to HCP Consul](#aws-ec2---test-client-connectivity-to-hcp-consul)
     - [AWS EC2 - Monitor the Server](#aws-ec2---monitor-the-server)
     - [AWS EC2 - Deploy service (api)](#aws-ec2---deploy-service-api)
@@ -75,6 +79,30 @@ echo aws ec2 import-key-pair \
 ```
 
 ## AWS EC2 / VM
+
+### AWS EC2 - Helpful Commands
+
+SSH through public bastion host to internal VM
+```
+ssh -A -J ubuntu@54.202.45.196 ubuntu@10.17.1.130
+```
+
+SCP consul-ca-cert through public bastion from K8s cluster to an internal VM.
+```
+scp -o 'ProxyCommand ssh ubuntu@54.202.45.196 -W %h:%p' ./ca.pem ubuntu@10.17.1.130:/tmp/ca.pem
+```
+
+Get K8s Consul secrets
+```
+kubectl -n consul get secret consul-ca-cert --context consul1 -o json | jq -r '.data."tls.crt"' | base64 -d > ca.pem
+kubectl -n consul get secrets consul-gossip-encryption-key -o jsonpath='{.data.key}'| base64 -d
+```
+
+Generate AWS kubeconfig file for VM (`cluster-name: presto-usw2-consul1`)
+```
+aws eks --region us-west-2 update-kubeconfig --name presto-usw2-consul1 --kubeconfig ./kubeconfig
+```
+
 ### AWS EC2 - Review Cloud-init execution
 When a user data script is processed, it is copied to and run from /var/lib/cloud/instances/instance-id/. The script is not deleted after it is run and can be found in this directory with the name user-data.txt.  
 ```
@@ -101,8 +129,86 @@ sudo systemctl status consul.service
 ### AWS EC2 - logs
 To investigate systemd errors starting consul use `journalctl`.  
 ```
-journalctl -u consul.service
+journalctl -u consul -xn | less
 ```
+pipe to less to avoid line truncation in terminal
+
+### AWS EC2 - Register local service with API
+web.json
+```
+{
+  "id": "web1",
+  "name": "web",
+  "port": 80,
+  "token": "$TOKEN",
+  "tags": ["vm","v1"],
+  "check": {
+    "name": "ping check",
+    "args": ["ping", "-c1", "learn.hashicorp.com"],
+    "interval": "30s",
+    "status": "passing"
+  }
+}
+```
+
+Regster using API endpoint /agent/service/register #avoid CLI permission bug
+```
+curl --header "X-Consul-Token: ${CONSUL_HTTP_TOKEN}" --request PUT --data @web.json localhost:8500/v1/agent/service/register
+sleep 2
+curl localhost:8500/v1/catalog/service/web | jq -r
+curl localhost:8500/v1/agent/checks | jq -r
+```
+deregister with service-id (web1)
+```
+curl --header "X-Consul-Token: ${CONSUL_HTTP_TOKEN}" --request PUT localhost:8500/v1/agent/service/deregister/web1
+```
+deregister node
+```
+curl --silent --header "X-Consul-Token: ${CONSUL_HTTP_TOKEN}" --request PUT --data '{"Datacenter": "dc1","Node": "consul-server-0","ServiceID": "consul-esm:"}' localhost:8500/v1/catalog/deregister
+```
+### ESM - Install
+```
+VERSION="0.7.1"
+sudo wget https://releases.hashicorp.com/consul-esm/${VERSION}/consul-esm_${VERSION}_linux_386.zip
+sudo unzip consul-esm_${VERSION}*.zip
+sudo rm *.zip
+```
+### ESM - Register external service
+
+external.json
+```
+{
+  "Node": "hashicorp",
+  "Address": "learn.hashicorp.com",
+  "NodeMeta": {
+    "external-node": "true",
+    "external-probe": "true"
+  },
+  "Service": {
+    "ID": "learn1",
+    "Service": "learn",
+    "Port": 80
+  },
+  "Checks": [
+    {
+      "Name": "http-check",
+      "status": "passing",
+      "Definition": {
+        "http": "https://learn.hashicorp.com/consul/",
+        "interval": "30s"
+      }
+    }
+  ]
+}
+```
+Regster External svc using endpoing: /catalog/register
+```
+curl --header "X-Consul-Token: ${CONSUL_HTTP_TOKEN}" --request PUT --data @external.json localhost:8500/v1/catalog/register
+sleep 2
+curl localhost:8500/v1/catalog/service/learn | jq -r
+```
+
+
 ### AWS EC2 - Test client connectivity to HCP Consul
 First check consul logs above to verify the local client successfully connected.  You should see the IP of the node and `agent: Synced`
 ```
@@ -325,10 +431,10 @@ helm install team2 hashicorp/consul --namespace consul --version 1.0.2 --set glo
 # 1.0.2 , consul 1.14.4-ent
 helm install consul-usw2-app1 hashicorp/consul --namespace consul --version 1.0.2 --values ./yaml/auto-consul-usw2-app2-values.yaml
 
-# consul 1.15.2-ent
-helm install consul-app1 hashicorp/consul --namespace consul --values ./yaml/auto-consul-app1-values-dataplane-hosted-ns.yaml
+# Upgrade
 
-helm install consul-app2 hashicorp/consul --namespace consul --values ./yaml/auto-consul-app2-values-dataplane-hosted-ns.yaml
+RELEASE=$(helm -n consul list -o json | jq -r '.[].name')
+helm upgrade ${RELEASE} hashicorp/consul --namespace consul --values ./yaml/auto-consul-auto-${RELEASE}-values-server-sd.yaml
 
 ```
 

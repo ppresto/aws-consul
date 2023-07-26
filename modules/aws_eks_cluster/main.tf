@@ -26,10 +26,12 @@ module "eks" {
     }
     vpc-cni = {
       most_recent = true
+      #addon_version = "v1.13.3-eksbuild.1"
     }
     aws-ebs-csi-driver = {
       most_recent = true
       #service_account_role_arn = data.aws_iam_policy.ebscsi.arn
+      #addon_version = "v1.21.0-eksbuild.1"
     }
   }
   create_kms_key = true

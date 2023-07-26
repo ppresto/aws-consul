@@ -112,3 +112,13 @@ resource "aws_security_group_rule" "eks_meshgw" {
   cidr_blocks       = var.private_cidr_blocks
   description       = "ingress k8s HC."
 }
+
+resource "aws_security_group_rule" "fake-service-nonmesh" {
+  security_group_id = var.security_group_create == true ? aws_security_group.consul_server[0].id : var.security_group_id
+  type              = "egress"
+  protocol          = "tcp"
+  from_port         = 8080
+  to_port           = 8080
+  cidr_blocks       = var.vpc_cidr_blocks
+  description       = "The HTTPS API"
+}

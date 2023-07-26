@@ -21,12 +21,8 @@ resource "helm_release" "consul_client" {
   timeout          = 900
   version          = var.consul_helm_chart_version
 
-  values     = [data.template_file.consul-client.rendered]
-  depends_on = [kubernetes_namespace.consul]
-}
-data "template_file" "consul-client" {
-  template = file("${path.module}/templates/${var.consul_helm_chart_template}")
-  vars = {
+  values     = [templatefile("${path.module}/templates/${var.consul_helm_chart_template}",
+  {
     consul_version            = var.consul_version
     consul_helm_chart_version = var.consul_helm_chart_version
     server_replicas           = var.server_replicas
@@ -36,10 +32,23 @@ data "template_file" "consul-client" {
     eks_cluster               = var.eks_cluster_endpoint
     consul_external_servers   = var.consul_external_servers
     node_selector             = var.node_selector
-  }
+  })]
+  depends_on = [kubernetes_namespace.consul]
 }
+
 resource "local_file" "helm-values" {
-  content  = data.template_file.consul-client.rendered
+  content  = templatefile("${path.module}/templates/${var.consul_helm_chart_template}",
+  {
+    consul_version            = var.consul_version
+    consul_helm_chart_version = var.consul_helm_chart_version
+    server_replicas           = var.server_replicas
+    cluster_name              = var.cluster_name
+    datacenter                = var.datacenter
+    partition                 = var.consul_partition
+    eks_cluster               = var.eks_cluster_endpoint
+    consul_external_servers   = var.consul_external_servers
+    node_selector             = var.node_selector
+  })
   filename = "./yaml/auto-${var.release_name}-${var.consul_helm_chart_template}"
 }
 
@@ -64,7 +73,7 @@ resource "kubernetes_secret" "consul-ca-cert-hcp" {
   data = { "tls.crt" = var.hcp_consul_ca_file }
 }
 resource "kubernetes_secret" "consul-ca-cert" {
-  count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "client" ? 1 : 0
+  count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "dataplane" ? 1 : 0
   metadata {
     name      = "consul-ca-cert"
     namespace = var.kubernetes_namespace
@@ -75,7 +84,7 @@ resource "kubernetes_secret" "consul-ca-cert" {
 # Get Consul Cluster bootstrap token
 
 resource "kubernetes_secret" "consul-bootstrap-token" {
-  count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "client" ? 1 : 0
+  count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "dataplane" ? 1 : 0
   metadata {
     name      = "consul-bootstrap-acl-token"
     namespace = var.kubernetes_namespace

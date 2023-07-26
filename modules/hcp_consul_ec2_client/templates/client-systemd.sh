@@ -5,10 +5,11 @@
 CONFIG_FILE_64="${CONSUL_CONFIG_FILE}"
 CONSUL_CA=$(echo ${CONSUL_CA_FILE}| base64 -d)
 
-### Install Consul
+### Install Consul - Ext K8s cluster requires awscli, kubctl, .kube and expose host ports
 curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
 apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-apt update && apt install -y consul-enterprise=1.14.4+ent-1 unzip jq
+apt update && apt install -y consul-enterprise=1.16.0+ent-1 unzip jq awscli
+snap install kubectl --classic
 
 ### Install Envoy
 curl https://func-e.io/install.sh | bash -s -- -b /usr/local/bin/
@@ -54,6 +55,7 @@ encrypt_verify_incoming = true
 encrypt_verify_outgoing = true
 log_level = "INFO"
 ui = true
+enable_script_checks = true
 #verify_incoming = true
 #verify_outgoing = true
 #verify_server_hostname = true
@@ -86,7 +88,7 @@ acl = {
 EOF
 
 # Configure systemd
-cat >/etc/systemd/system/consul.service <<- EOF
+cat >/etc/systemd/system/consul.service << EOF
 [Unit]
 Description="HashiCorp Consul Ent - A service mesh solution"
 Documentation=https://www.consul.io/

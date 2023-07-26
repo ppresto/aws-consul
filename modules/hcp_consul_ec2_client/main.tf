@@ -5,16 +5,6 @@ data "aws_ssm_parameter" "ubuntu_1804_ami_id" {
   name = "/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
 }
 
-data "template_file" "userdata" {
-  template = file("${path.module}/templates/client-systemd.sh")
-  vars = {
-    CONSUL_CA_FILE     = var.hcp_consul_ca_file
-    CONSUL_CONFIG_FILE = var.hcp_consul_config_file
-    CONSUL_ACL_TOKEN   = var.hcp_consul_root_token_secret_id
-    SERVICE_ACL_TOKEN  = var.consul_acl_token_secret_id
-    CONSUL_SERVICE     = var.consul_service
-  }
-}
 resource "aws_instance" "ec2" {
   ami                  = var.use_latest_ami ? data.aws_ssm_parameter.ubuntu_1804_ami_id.value : var.ami_id
   instance_type        = "t3.micro"
@@ -24,13 +14,19 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids      = concat([aws_security_group.bastion.id], var.security_group_ids)
   subnet_id                   = var.subnet_id
   associate_public_ip_address = var.associate_public_ip_address
-  user_data                   = data.template_file.userdata.rendered
+  user_data                   = templatefile("${path.module}/templates/client-systemd.sh",
+    {
+      CONSUL_CA_FILE     = var.hcp_consul_ca_file
+      CONSUL_CONFIG_FILE = var.hcp_consul_config_file
+      CONSUL_ACL_TOKEN   = var.hcp_consul_root_token_secret_id
+      SERVICE_ACL_TOKEN  = var.consul_acl_token_secret_id
+      CONSUL_SERVICE     = var.consul_service
+  })
   tags = merge(
     { "Name" = "${var.hostname}" },
     { "Project" = "${var.prefix}-${local.region_shortname}-${var.hostname}" }
   )
 }
-
 ## Bastion SG
 resource "aws_security_group" "bastion" {
   name_prefix = "${local.region_shortname}-bastion-sg"

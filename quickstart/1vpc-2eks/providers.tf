@@ -29,27 +29,27 @@ terraform {
     }
   }
 }
-
 provider "aws" {
   alias  = "usw2"
   region = "us-west-2"
+  #ignore EKS subnet tag updates done to VPC.
+  ignore_tags {
+    key_prefixes = ["kubernetes.io/"]
+  }
 }
 
 provider "aws" {
   alias  = "use1"
   region = "us-east-1"
-}
-provider "consul" {
-  alias      = "use1"
-  address    = module.hcp_consul_use1[local.hvn_list_use1[0]].consul_public_endpoint_url
-  datacenter = module.hcp_consul_use1[local.hvn_list_use1[0]].datacenter
-  token      = module.hcp_consul_use1[local.hvn_list_use1[0]].consul_root_token_secret_id
+  ignore_tags {
+    key_prefixes = ["kubernetes.io/"]
+  }
 }
 
 # Required to setup policies/tokens for EC2 services
-provider "consul" {
-  alias      = "usw2"
-  address    = module.hcp_consul_usw2[local.hvn_list_usw2[0]].consul_public_endpoint_url
-  datacenter = module.hcp_consul_usw2[local.hvn_list_usw2[0]].datacenter
-  token      = module.hcp_consul_usw2[local.hvn_list_usw2[0]].consul_root_token_secret_id
-}
+# provider "consul" {
+#   alias      = "usw2"
+#   address    = "http://k8s-consul-consului-52b687657e-77eaa847178b90c9.elb.us-west-2.amazonaws.com"
+#   datacenter = "dc1"
+#   token      = "ea79eb04-ecb4-a6ff-73a5-df8620bc5a88"
+# }
