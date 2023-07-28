@@ -84,8 +84,8 @@ delete () {
                         echo "${PROJECTS[$i]} / ${region} - Deleting AWS LB Controller to EKS Cluster ${cluster}"
                         # get identity
                         aws sts get-caller-identity
-                        kubectl config use-context ${PROJECTS[$i]}
-                        helm uninstall -n kube-system --kube-context=${PROJECTS[$i]}  aws-load-balancer-controller
+                        kubectl config use-context $cluster
+                        helm uninstall -n kube-system --kube-context=$cluster aws-load-balancer-controller
                     fi
                 done
             fi

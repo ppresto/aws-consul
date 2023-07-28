@@ -75,19 +75,19 @@ locals {
         }
       }
       # Configure Project EC2 Resources
-      # "ec2" = {
-      #   "vm1" = {
-      #     "ec2_ssh_key" : var.ec2_key_pair_name
-      #     "target_subnets" : "private_subnets"
-      #     "associate_public_ip_address" : false
-      #     "service" : "consul-esm"
-      #   }
-      #   "bastion" = {
-      #     "ec2_ssh_key" : var.ec2_key_pair_name
-      #     "target_subnets" : "public_subnets"
-      #     "associate_public_ip_address" : true
-      #   }
-      # }
+      "ec2" = {
+        "vm1" = {
+          "ec2_ssh_key" : var.ec2_key_pair_name
+          "target_subnets" : "private_subnets"
+          "associate_public_ip_address" : false
+          "service" : "consul-esm"
+        }
+        "bastion" = {
+          "ec2_ssh_key" : var.ec2_key_pair_name
+          "target_subnets" : "public_subnets"
+          "associate_public_ip_address" : true
+        }
+      }
     }
   }
   # HCP Runtime

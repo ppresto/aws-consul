@@ -177,7 +177,7 @@ output "use1_eks_cluster_endpoints" {
 }
 output "use1_eks_cluster_names" {
   description = "The name/id of the EKS cluster. Will block on cluster creation until the cluster is really ready"
-  value       = { for k, v in local.use1.project1.eks : k => local.use1.project1.eks[k].cluster_name }
+  value       = { for k, v in local.eks_map_use1 : k => module.eks-use1[k].cluster_name }
 }
 
 output "use1_ec2_ip" {
@@ -186,4 +186,9 @@ output "use1_ec2_ip" {
 
 output "use1_ec2_dns" {
   value = { for k, v in local.ec2_map_use1 : k => module.hcp_consul_ec2_client-use1[k].ec2_dns }
+}
+
+output "endpoint" {
+  description = "Endpoint list for doctorconsul"
+  value       = [ for k in keys(local.eks_map_use1):module.eks-use1[k].cluster_endpoint ]
 }

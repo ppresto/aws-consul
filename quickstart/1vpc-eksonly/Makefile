@@ -1,0 +1,40 @@
+.PHONY: all init destroy fmt clean
+.PHONY: infra eks-connect consul-server consul-dataplane awslb
+CUR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+CUR_DIR2=$(echo ${CUR_DIR} | sed "s/\//\\\\\//g")
+K8S_CONTEXT=`terraform output -json usw2_projects | jq -r '.[]'`
+
+all: infra eks-connect awslb doctorconsul
+destroy: doctorconsul-clean infra-clean
+
+fmt:
+	@terraform fmt -recursive
+
+init: fmt
+	@terraform init
+
+infra: init
+	@terraform apply -auto-approve
+
+eks-connect:
+	@source "../../scripts/kubectl_connect_eks.sh" .
+
+awslb:
+	@../../scripts/install_awslb_controller.sh .
+
+doctorconsul:
+	@../../scripts/run_doctorconsul.sh
+
+doctorconsul-clean:
+	@../../scripts/run_doctorconsul.sh -delete
+
+awslb-clean:
+	@-../../scripts/install_awslb_controller.sh . delete
+
+infra-clean:
+	@terraform destroy -auto-approve
+
+clean:
+	-rm -rf .terraform/
+	-rm .terraform.lock.hcl
+	-rm terraform.tfstate*

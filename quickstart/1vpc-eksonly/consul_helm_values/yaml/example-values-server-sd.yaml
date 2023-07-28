@@ -1,0 +1,100 @@
+global:
+  name: consul
+  image: "hashicorp/consul-enterprise:1.15.4-ent"
+  imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:1.1.3
+  enableConsulNamespaces: true
+  enterpriseLicense:
+    secretName: 'consul-ent-license'
+    secretKey: 'key'
+    enableLicenseAutoload: true
+  datacenter: dc1
+  peering:
+    enabled: true
+  adminPartitions:
+    enabled: true
+    name: default
+
+  # TLS configures whether Consul components use TLS.
+  tls:
+    enabled: true
+    httpsOnly: false  # Metrics are exposed on 8500 only (http).  Anonymous policy requires Agent "read" if ACL enabled.
+    enableAutoEncrypt: true  #Required if gossipEncryption uses autoGenerate: true
+  acls:
+    manageSystemACLs: true
+  gossipEncryption:
+    autoGenerate: true
+  metrics:
+    enabled: true
+    enableGatewayMetrics: true
+    enableAgentMetrics: true
+    agentMetricsRetentionTime: "59m"
+client:
+  enabled: true
+#   exposeGossipPorts: true # exposes client gossip ports as hostPorts
+
+server:
+  replicas: 3
+  bootstrapExpect: 3
+  # exposeGossipAndRPCPorts: true # exposes the server gossip and RPC ports as hostPorts
+  # ports:
+  #   # Configures the server gossip port
+  #   serflan:
+  #     # Note that this needs to be different than 8301, to avoid conflicting with the client gossip hostPort
+  #     port: 9301
+  exposeService:
+    # When enabled, deploys a Kubernetes Service to reach the Consul servers.
+    # @type: boolean
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+ 
+  extraConfig: |
+    {
+      "log_level": "TRACE"
+    }
+  resources:
+    requests:
+      memory: "1461Mi" # 75% of 2GB Mem
+      cpu: "1000m"
+    limits:
+      memory: "1461Mi"
+      cpu: "1000m"
+dns:
+  enabled: true
+  enableRedirection: true
+
+syncCatalog:
+  enabled: true
+  toConsul: true
+  toK8S: false
+  k8sAllowNamespaces: ["*"]
+  k8sDenyNamespaces: []
+  consulNamespaces:
+    mirroringK8S: true
+
+# connectInject and meshGateway are required for Peering
+connectInject:
+  enabled: true
+  default: false
+meshGateway:
+  enabled: true
+  replicas: 1
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+
+ui:
+  enabled: true
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations: |
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  metrics:
+    enabled: true # by default, this inherits from the value global.metrics.enabled
+    provider: "prometheus"
+    baseURL: http://prometheus-server.default.svc.cluster.local
+    #baseURL: http://prometheus-server.metrics.svc.cluster.local
