@@ -87,32 +87,6 @@ module "eks-use1" {
   #hcp_cidr                        = local.all_routable_cidr_blocks_use1
 }
 
-resource "local_file" "test" {
-  for_each = local.eks_map_use1
-  content = templatefile("${path.module}/../templates/consul_helm_client.tmpl",
-    {
-      region_shortname            = "use1"
-      cluster_name                = try(local.eks_map_use1[each.key].cluster_name, local.name)
-      server_replicas             = try(local.eks_map_use1[each.key].eks_desired_size, var.eks_desired_size)
-      datacenter                  = try(local.eks_map_use1[each.key].consul_datacenter, "dc1")
-      consul_type                 = try(local.eks_map_use1[each.key].consul_type, "client")
-      release_name                = "consul-${each.key}"
-      consul_external_servers     = "NO_HCP_SERVERS"
-      eks_cluster_endpoint        = module.eks-use1[each.key].cluster_endpoint
-      consul_version              = var.consul_version
-      consul_helm_chart_version   = var.consul_helm_chart_version
-      consul_helm_chart_template  = try(local.eks_map_use1[each.key].consul_helm_chart_template, var.consul_helm_chart_template)
-      consul_chart_name           = "consul"
-      consul_ca_file              = ""
-      consul_config_file          = ""
-      consul_root_token_secret_id = ""
-      partition                   = try(local.eks_map_use1[each.key].consul_partition, var.consul_partition)
-      node_selector               = "" #K8s node label to target deployment too.
-  })
-  filename = "${path.module}/consul_helm_values/auto-${local.eks_map_use1[each.key].cluster_name}.tf"
-}
-
-
 output "use1_regions" {
   value = { for k, v in local.use1 : k => data.aws_region.use1.name }
 }

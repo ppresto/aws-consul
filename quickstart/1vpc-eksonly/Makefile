@@ -4,7 +4,7 @@ CUR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 CUR_DIR2=$(echo ${CUR_DIR} | sed "s/\//\\\\\//g")
 K8S_CONTEXT=`terraform output -json usw2_projects | jq -r '.[]'`
 
-all: infra eks-connect awslb doctorconsul
+all: infra eks-connect doctorconsul
 destroy: doctorconsul-clean infra-clean
 
 fmt:
@@ -33,8 +33,3 @@ awslb-clean:
 
 infra-clean:
 	@terraform destroy -auto-approve
-
-clean:
-	-rm -rf .terraform/
-	-rm .terraform.lock.hcl
-	-rm terraform.tfstate*
