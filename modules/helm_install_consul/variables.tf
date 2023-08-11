@@ -66,7 +66,7 @@ variable "consul_license" {
 variable "consul_type" {
   description = "Server or Client"
   type        = string
-  default     = "client"
+  default     = "dataplane"
 }
 variable "consul_namespace" {
   type        = string

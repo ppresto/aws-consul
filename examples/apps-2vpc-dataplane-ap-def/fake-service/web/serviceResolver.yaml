@@ -9,7 +9,7 @@ spec:
   failover:
     '*':
       targets:
-        - partition: app1
+        - partition: api
           namespace: default
           service: api
         #- namespace: westus2-3

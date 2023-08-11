@@ -84,7 +84,8 @@ resource "kubernetes_secret" "consul-ca-cert" {
 # Get Consul Cluster bootstrap token
 
 resource "kubernetes_secret" "consul-bootstrap-token" {
-  count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "dataplane" ? 1 : 0
+  #count = var.consul_helm_chart_template != "values-dataplane-hcp.yaml" && var.consul_type == "dataplane" ? 1 : 0
+  count = var.consul_type == "dataplane" ? 1 : 0
   metadata {
     name      = "consul-bootstrap-acl-token"
     namespace = var.kubernetes_namespace

@@ -1,18 +1,18 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-CTX1=app1
-CTX2=app2
+CTX1=api1
+CTX2=web1
 
 deploy() {
     # deploy eastus services
     kubectl config use-context ${CTX1}
-    kubectl apply -f ${SCRIPT_DIR}/${CTX1}/init-consul-config
-    kubectl apply -f ${SCRIPT_DIR}/${CTX1}/
+    kubectl apply -f ${SCRIPT_DIR}/api/init-consul-config
+    kubectl apply -f ${SCRIPT_DIR}/api/
 
     # deploy westus2 services
     kubectl config use-context ${CTX2}
-    kubectl apply -f ${SCRIPT_DIR}/${CTX2}/init-consul-config
-    kubectl apply -f ${SCRIPT_DIR}/${CTX2}
+    kubectl apply -f ${SCRIPT_DIR}/web/init-consul-config
+    kubectl apply -f ${SCRIPT_DIR}/web
 
     # Output Ingress URL for fake-service
     kubectl config use-context ${CTX2}
@@ -23,12 +23,12 @@ deploy() {
 
 delete() {
     kubectl config use-context ${CTX1}
-    kubectl delete -f ${SCRIPT_DIR}/${CTX1}
-    kubectl delete -f ${SCRIPT_DIR}/${CTX1}/init-consul-config
+    kubectl delete -f ${SCRIPT_DIR}/api
+    kubectl delete -f ${SCRIPT_DIR}/api/init-consul-config
 
     kubectl config use-context ${CTX2}
-    kubectl delete -f ${SCRIPT_DIR}/${CTX2}
-    kubectl delete -f ${SCRIPT_DIR}/${CTX2}/init-consul-config
+    kubectl delete -f ${SCRIPT_DIR}/web
+    kubectl delete -f ${SCRIPT_DIR}/web/init-consul-config
 
 }
 #Cleanup if any param is given on CLI

@@ -1,16 +1,19 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-
+# CTX1=app1
+# CTX2=app2
+CTX1=web1
+CTX2=api1
 deploy() {
     # deploy westus2 services
-    kubectl config use-context app2
+    kubectl config use-context ${CTX2}
     kubectl apply -f ${SCRIPT_DIR}/vpc-api/init-consul-config/intentions-api.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-api/init-consul-config/proxydefaults.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-api/init-consul-config/servicedefaults.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-api/init-consul-config/api_exportedServices.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-api
 
-    kubectl config use-context app1
+    kubectl config use-context ${CTX1}
     kubectl apply -f ${SCRIPT_DIR}/vpc-web/init-consul-config/intentions-web.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-web/init-consul-config/proxydefaults.yaml
     kubectl apply -f ${SCRIPT_DIR}/vpc-web/init-consul-config/servicedefaults.yaml
@@ -19,7 +22,7 @@ deploy() {
     kubectl apply -f ${SCRIPT_DIR}/vpc-web/
 
     # Output Ingress URL for fake-service
-    kubectl config use-context app1
+    kubectl config use-context ${CTX1}
     echo
     echo "http://$(kubectl -n consul get svc -l component=ingress-gateway -o json | jq -r '.items[].status.loadBalancer.ingress[].hostname'):8080/ui"
     echo
@@ -27,15 +30,15 @@ deploy() {
 }
 
 delete() {    
-    kubectl config use-context app1
+    kubectl config use-context ${CTX1}
     kubectl delete -f ${SCRIPT_DIR}/vpc-web/init-consul-config/web_exportedServices.yaml
-    kubectl config use-context app2
+    kubectl config use-context ${CTX2}
     kubectl delete -f ${SCRIPT_DIR}/vpc-api/init-consul-config/api_exportedServices.yaml
     
     kubectl delete -f ${SCRIPT_DIR}/vpc-api
     kubectl delete -f ${SCRIPT_DIR}/vpc-api/init-consul-config
 
-    kubectl config use-context app1
+    kubectl config use-context ${CTX1}
     kubectl delete -f ${SCRIPT_DIR}/vpc-web
     kubectl delete -f ${SCRIPT_DIR}/vpc-web/init-consul-config
 }

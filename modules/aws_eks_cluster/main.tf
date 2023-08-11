@@ -73,6 +73,22 @@ module "eks" {
       type        = "ingress"
       cidr_blocks = var.hcp_cidr
     }
+    "${var.cluster_name}_ingress_envoy_to_envoy" = {
+      description = "HCP Cluster to all EKS Nodes to support MGW Peering"
+      protocol    = "tcp"
+      from_port   = 20000
+      to_port     = 22000
+      type        = "ingress"
+      cidr_blocks = var.all_routable_cidrs
+    }
+    "${var.cluster_name}_ingress_eks_to_eks" = {
+      description = "EKS Cluster to support MGW"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = var.hcp_cidr
+    }
   }
 
   eks_managed_node_group_defaults = {

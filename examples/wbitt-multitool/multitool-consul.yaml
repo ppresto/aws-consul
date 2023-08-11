@@ -36,9 +36,9 @@ spec:
       labels:
         app: network-multitool
         service: fake-service
-      annotations:
-        consul.hashicorp.com/connect-inject: 'true'
-        consul.hashicorp.com/transparent-proxy: 'true'
+      # annotations:
+      #   consul.hashicorp.com/connect-inject: 'true'
+      #   consul.hashicorp.com/transparent-proxy: 'true'
     spec:
       serviceAccountName: network-multitool
       containers:

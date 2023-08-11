@@ -1,0 +1,10 @@
+  apiVersion: consul.hashicorp.com/v1alpha1
+  kind: ServiceDefaults
+  metadata:
+    name: payroll
+  spec:
+    protocol: http
+    destination:
+      addresses:
+        - "10.17.1.219"
+      port: 9091

@@ -1,7 +1,7 @@
 .PHONY: all init deploy plan destroy fmt clean
 .PHONY: consul consul-info consul-use1 consul-usw2 awslb dataplane fake-service
 
-all: deploy consul
+all: infra consul
 
 fmt:
 	@terraform fmt -recursive
@@ -9,7 +9,7 @@ fmt:
 init: fmt
 	@terraform init
 
-deploy: init
+infra: init
 	@terraform apply -auto-approve
 	@echo "Source the following script to connect to all EKS clusters"
 	@echo
@@ -22,6 +22,9 @@ awslb:
 
 dataplane:
 	@terraform -chdir="consul_helm_values" init
+	@terraform -chdir="consul_helm_values" apply -target=module.consul_presto-usw2-api1 -auto-approve
+	@terraform -chdir="consul_helm_values" apply -target=module.consul_presto-usw2-web1 -auto-approve
+	@terraform -chdir="consul_helm_values" apply -target=module.consul_presto-usw2-server -auto-approve
 	@terraform -chdir="consul_helm_values" apply -auto-approve
 
 consul-info:

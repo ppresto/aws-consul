@@ -12,27 +12,24 @@ PROJECTS=($(echo $output | jq -r '. | to_entries[] | select(.key|endswith("_proj
 
 install() {
     # Authenticate to EKS
-    for i in ${!PROJECTS[@]}
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names_to_region\")) | .value.value | to_entries[] | (.key)")
+    for cluster in ${EKS_CLUSTER_NAMES}
     do
-        #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-        EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
-        #REGIONS=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value.\"${PROJECTS[$i]}\"")
-        REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
-        for cluster in ${EKS_CLUSTER_NAMES}
-        do
-            if [[ ! ${cluster} == "null" ]]; then
-                for region in $REGIONS
-                do
-                    if [[ ! ${region} == "null" ]]; then
-                        echo
-                        echo "${PROJECTS[$i]} / ${region} - Installing AWS LB Controller to EKS Cluster ${cluster}"
-                        # get identity
-                        aws sts get-caller-identity
-                        # add EKS cluster to $HOME/.kube/config
-                        aws eks --region $region update-kubeconfig --name $cluster
+        if [[ ! ${cluster} == "null" ]]; then
+            region=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names_to_region\")) | .value.value.\"${cluster}\"")
 
-                        # IAM Role and Policy was already created by TF
-                        # create aws lb controller service account and map to IAM role
+            echo
+            echo "#"
+            echo "### ${region} / ${cluster} - Installing AWS LB Controller"
+            echo "#"
+            echo
+            # get identity
+            aws sts get-caller-identity
+            # add EKS cluster to $HOME/.kube/config
+            aws eks --region $region update-kubeconfig --name $cluster
+
+            # IAM Role and Policy was already created by TF
+            # create aws lb controller service account and map to IAM role
 cat >/tmp/aws-load-balancer-controller-service-account.yaml <<-EOF
 apiVersion: v1
 kind: ServiceAccount
@@ -60,36 +57,24 @@ EOF
                         sleep 5
                         kubectl get deployment -n kube-system aws-load-balancer-controller
 
-                    fi
-                done
-            fi
-        done
+        fi
     done
 }
 
 delete () {
     # Authenticate to EKS
-    for i in ${!PROJECTS[@]}
+    EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names_to_region\")) | .value.value | to_entries[] | (.key)")
+    for cluster in ${EKS_CLUSTER_NAMES}
     do
-            #EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value.\"${PROJECTS[$i]}\"")
-            EKS_CLUSTER_NAMES=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names\")) | .value.value | to_entries[] | (.value)")
-            REGIONS=$(echo $output |jq -r ".| to_entries[] | select(.key|endswith(\"_regions\")) | .value.value | to_entries[] | (.value)")
-        for cluster in ${EKS_CLUSTER_NAMES}
-        do
-            if [[ ! ${cluster} == "null" ]]; then
-                for region in $REGIONS
-                do
-                    if [[ ! ${region} == "null" ]]; then
-                        echo
-                        echo "${PROJECTS[$i]} / ${region} - Deleting AWS LB Controller to EKS Cluster ${cluster}"
-                        # get identity
-                        aws sts get-caller-identity
-                        kubectl config use-context $cluster
-                        helm uninstall -n kube-system --kube-context=$cluster aws-load-balancer-controller
-                    fi
-                done
-            fi
-        done
+        if [[ ! ${cluster} == "null" ]]; then
+            region=$(echo $output | jq -r ".| to_entries[] | select(.key|endswith(\"_eks_cluster_names_to_region\")) | .value.value.\"${cluster}\"")
+            echo
+            echo "${region} / ${cluster} - Deleting AWS LB Controller to EKS Cluster "
+            # get identity
+            aws sts get-caller-identity
+            kubectl config use-context ${cluster##*-}
+            helm uninstall -n kube-system --kube-context=${cluster##*-} aws-load-balancer-controller
+        fi
     done
 }
 #Cleanup if any param is given on CLI

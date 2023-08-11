@@ -219,4 +219,16 @@ locals {
     }])
   ])
   eks_map_use1 = { for item in local.eks_use1 : keys(item)[0] => values(item)[0] }
+
+  # Create VPC tags for each project with EKS cluster_names to support AWS LB Controller
+  eks_private_tags = {for env, values in local.eks_location_map_use1 :
+    "${env}" => merge({for eks, attr in values :
+        "kubernetes.io/cluster/${attr.cluster_name}" => "shared"
+      },{Tier = "Private","kubernetes.io/role/internal-elb" = 1})
+  }
+  eks_public_tags = {for env, values in local.eks_location_map_use1 :
+    "${env}" => merge({for eks, attr in values :
+        "kubernetes.io/cluster/${attr.cluster_name}" => "shared"
+      },{Tier = "Public","kubernetes.io/role/elb" = 1})
+  }
 }

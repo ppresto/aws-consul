@@ -10,5 +10,5 @@ spec:
   sources:
   - name: web
     namespace: default
-    partition: app2
+    partition: web
     action: allow

@@ -42,6 +42,7 @@ spec:
         #consul.hashicorp.com/envoy-extra-args: '--log-level debug --disable-hot-restart'
         consul.hashicorp.com/service-tags: 'v1'
         consul.hashicorp.com/service-meta-version: 'v1'
+        # consul.hashicorp.com/connect-service-upstreams: 'payroll:9091'
     spec:
       serviceAccountName: api
       containers:
@@ -52,10 +53,13 @@ spec:
           env:
             - name: 'LISTEN_ADDR'
               value: '0.0.0.0:9091'
-            #- name: 'UPSTREAM_URIS'
-            #  value: 'grpc://currency.currency-ns:9090,http://payments.payments-ns:9090'
+            - name: 'UPSTREAM_URIS'
+              value: 'http://payroll.virtual.web.ap.consul'
+              #value: 'https://example.com'
+              #value: 'http://ip-10-17-1-219.us-west-2.compute.internal:9091'
+              #value: 'http://10.17.1.219:9091'
             - name: 'NAME'
-              value: 'api (app1/default)'
+              value: 'api-v2 (web/default)'
             - name: 'MESSAGE'
               value: 'API response'
             - name: 'SERVER_TYPE'
