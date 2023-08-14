@@ -2,13 +2,11 @@ global:
   enabled: false
   domain: consul
   logLevel: "debug"
-  name: ${cluster_name}
-  datacenter: ${datacenter}
-  image: "hashicorp/consul-enterprise:${consul_version}"
-  #imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:${consul_helm_chart_version}
+  name: presto-usw2-api1
+  datacenter: presto-cluster-usw2
+  image: "hashicorp/consul-enterprise:1.16.0-ent"
+  #imageK8S: docker.mirror.hashicorp.services/hashicorp/consul-k8s-control-plane:1.2.0
   #imageConsulDataplane: "hashicorp/consul-dataplane:1.1.0"
-  # metrics:
-  #   enableTelemetryCollector: true
   enterpriseLicense:
     secretName: 'consul-ent-license'
     secretKey: 'key'
@@ -16,7 +14,7 @@ global:
   enableConsulNamespaces: true
   adminPartitions:
     enabled: true
-    name: ${partition}
+    name: default
   peering:
     enabled: true
   acls:
@@ -37,12 +35,12 @@ global:
 
 externalServers:
   enabled: true
-  hosts: ["${consul_external_servers}"]
-  #tlsServerName: "server.${datacenter}.consul"
+  hosts: ["presto-cluster-usw2.private.consul.328306de-41b8-43a7-9c38-ca8d89d06b07.aws.hashicorp.cloud"]
+  #tlsServerName: "server.presto-cluster-usw2.consul"
   httpsPort: 443
   grpcPort: 8502
   useSystemRoots: true
-  k8sAuthMethodHost: ${eks_cluster}
+  k8sAuthMethodHost: https://E616784D41BD815149A3F6C26D1BF073.gr7.us-west-2.eks.amazonaws.com
 
 dns:
   enabled: true
@@ -70,7 +68,7 @@ connectInject:
     defaultEnableMerging: false
   consulNode:
     meta: 
-      node: "${cluster_name}-agentless-node"
+      node: "presto-usw2-api1-agentless-node"
 
 meshGateway:
   enabled: true
@@ -96,9 +94,6 @@ ingressGateways:
         type: LoadBalancer
         annotations: |
           service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-# telemetryCollector:
-#   enabled: true
-  
 ui:
   metrics:
     enabled: true # by default, this inherits from the value global.metrics.enabled

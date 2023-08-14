@@ -1,0 +1,10 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: example-https
+spec:
+  destination:
+    name: example-https
+  sources:
+    - name: api
+      action: allow

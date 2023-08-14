@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api
+  namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: default
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 9091
+      targetPort: 9091
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  namespace: default
+  labels:
+    app: api
+    version: v1
+    service: fake-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      namespace: default
+      labels:
+        app: api
+        service: fake-service
+      annotations:
+        consul.hashicorp.com/connect-inject: 'true'
+        consul.hashicorp.com/transparent-proxy: 'true'
+        #consul.hashicorp.com/envoy-extra-args: '--log-level debug --disable-hot-restart'
+        consul.hashicorp.com/service-tags: 'v1'
+        consul.hashicorp.com/service-meta-version: 'v1'
+        # consul.hashicorp.com/connect-service-upstreams: 'payroll:9091'
+    spec:
+      serviceAccountName: api
+      containers:
+        - name: api
+          image: nicholasjackson/fake-service:v0.25.2
+          ports:
+            - containerPort: 9091
+          env:
+            - name: 'LISTEN_ADDR'
+              value: '0.0.0.0:9091'
+            - name: 'UPSTREAM_URIS'
+              #value: 'http://payroll.virtual.web.ap.consul'
+              value: 'https://example.com'
+              #value: 'http://ip-10-17-1-219.us-west-2.compute.internal:9091'
+              #value: 'http://10.17.1.219:9091'
+            - name: 'NAME'
+              value: 'api (web/default)'
+            - name: 'MESSAGE'
+              value: 'API response'
+            - name: 'SERVER_TYPE'
+              value: 'http'
+            - name: 'TIMING_50_PERCENTILE'
+              value: '20ms'
+            - name: 'TIMING_90_PERCENTILE'
+              value: '30ms'
+            - name: 'TIMING_99_PERCENTILE'
+              value: '40ms'
+            - name: 'TIMING_VARIANCE'
+              value: '10'
+            - name: 'HTTP_CLIENT_APPEND_REQUEST'
+              value: 'true'
+            # - name: 'TRACING_ZIPKIN'
+            #   value: 'http://simplest-collector.default:9411'

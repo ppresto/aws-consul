@@ -1,11 +1,11 @@
 #!/bin/bash
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-CTX1="api1"  #K8s Context
+CTX1="web1"  #K8s Context
 Node="payroll-ec2"
 Address="10.17.1.112"
 Service="payroll"
 Namespace="default"
-Partition="default"
+Partition="web"
 
 
 kubectl config use-context ${CTX1}
@@ -44,6 +44,8 @@ setup_terminating_gw() {
   consul acl policy create -name "tgw-${Service}-write-policy" -rules "$(svc_acl)" -partition ${Partition} -namespace ${Namespace}
 
   # Get Terminating GW role ID (ROLE_ID)
+  #ROLE_ID=$(consul acl role list -partition ${Partition} -namespace ${Namespace} -format=json | jq --raw-output '.[] | first(select(.Policies[].Name | endswith("terminating-gateway-policy"))).ID')
+  echo "ROLE_ID=$ROLE_ID"
   ROLE_ID=$(consul acl role list -partition ${Partition} -namespace ${Namespace} | grep -B 6 -- "terminating-gateway-policy" | grep ID| awk '{print $NF}')
   echo "Getting Terminationg GW Role ID: $ROLE_ID"
   # Update Terminating GW Role (ROLE_ID) with the new ACL Policy
