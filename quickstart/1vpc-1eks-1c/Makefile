@@ -3,7 +3,7 @@
 
 K8S_CONTEXT=`terraform output -json usw2_projects | jq -r '.[]'`
 
-all: infra-deploy eks-connect awslb consul-install metrics-install run-fortio-tests
+all: infra-deploy eks-connect awslb consul-install
 destroy: consul-clean infra-clean
 
 fmt:
@@ -23,7 +23,7 @@ eks-connect:
 	@kubectl config use-context ${K8S_CONTEXT}
 
 awslb:
-	@../../scripts/install_awslb_controller.sh .
+	@../../scripts/install_awslb_controller_by_project.sh .
 
 consul-install:
 	@terraform -chdir="consul_helm_values" init
@@ -32,18 +32,9 @@ consul-install:
 	@kubectl -n consul get svc consul-ui -o json | jq -r '.status.loadBalancer.ingress[].hostname'
 	@echo "Token"
 	@kubectl -n consul get secrets consul-bootstrap-acl-token --template "{{ .data.token | base64decode }}"
-	
-metrics-clean:
-	@-../../metrics/deploy_helm.sh -d
-	@-../../metrics/fortio-tests/deploy.sh delete
 
 consul-clean: eks-connect metrics-clean
 	@-terraform -chdir="consul_helm_values" destroy -auto-approve
 
 infra-clean:
 	@terraform destroy -auto-approve
-
-clean:
-	-rm -rf .terraform/
-	-rm .terraform.lock.hcl
-	-rm terraform.tfstate*
