@@ -1,5 +1,15 @@
 # Deploy Services, Terminating GW, and show encryption
 
+## PreReq
+* Build TF Infra `./quickstart/1hcp-2vpc-2eks`
+* Install AWS LB Controller `../../scripts/install_awslb_controller.sh .`
+* Connect to eks clusters from TF directory `../../scripts/kubectl_connect_eks.sh .`
+* Setup local Consul Env`source ../../scripts/setConsul.sh .`
+## Quickstart
+skip steps below for a fully running environment
+```
+./examples/apps-dataplane-tgw-ap-def/deploy.sh
+```
 ## HCP / Consul UI
 Explain Partitions
 * Default/Default - 3 Consul Servers
@@ -50,4 +60,9 @@ The new EKS cluster will deploy a service called `api` that's authorized to make
 ## Redeploy `web` to point to the new `api` service to validate example.com
 ```
 ./examples/apps-dataplane-tgw-ap-def/fake-service/web-final/deploy.sh
+```
+
+## Clean up
+```
+./examples/apps-dataplane-tgw-ap-def/deploy.sh -d
 ```
