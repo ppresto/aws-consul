@@ -20,7 +20,6 @@ infra-deploy: init
 eks-connect:
 	@source "../../scripts/kubectl_connect_eks.sh" .
 	@kubectl cluster-info
-	@kubectl config use-context ${K8S_CONTEXT}
 
 awslb:
 	@../../scripts/install_awslb_controller_by_project.sh .
@@ -33,7 +32,7 @@ consul-install:
 	@echo "Token"
 	@kubectl -n consul get secrets consul-bootstrap-acl-token --template "{{ .data.token | base64decode }}"
 
-consul-clean: eks-connect metrics-clean
+consul-clean: eks-connect
 	@-terraform -chdir="consul_helm_values" destroy -auto-approve
 
 infra-clean:
